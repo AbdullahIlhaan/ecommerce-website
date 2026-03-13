@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Package, FolderTree, Award, Users,
-  ShoppingCart, Ticket, Star, ChevronLeft
+  ShoppingCart, Ticket, Star, ChevronLeft, Shield, User
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -9,21 +9,28 @@ import {
   SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { usePage } from "@inertiajs/react";
+import type { AuthUser, UserRole } from "@/lib/store";
 
 const mainNav = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Products", url: "/products", icon: Package },
-  { title: "Categories", url: "/categories", icon: FolderTree },
-  { title: "Brands", url: "/brands", icon: Award },
-  { title: "Customers", url: "/customers", icon: Users },
-  { title: "Orders", url: "/orders", icon: ShoppingCart },
-  { title: "Coupons", url: "/coupons", icon: Ticket },
-  { title: "Reviews", url: "/reviews", icon: Star },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "admin", "moderator"] as UserRole[] },
+  { title: "Products", url: "/products", icon: Package, roles: ["super_admin", "admin"] as UserRole[] },
+  { title: "Categories", url: "/categories", icon: FolderTree, roles: ["super_admin", "admin"] as UserRole[] },
+  { title: "Brands", url: "/brands", icon: Award, roles: ["super_admin", "admin"] as UserRole[] },
+  { title: "Customers", url: "/customers", icon: Users, roles: ["super_admin", "admin"] as UserRole[] },
+  { title: "Orders", url: "/orders", icon: ShoppingCart, roles: ["super_admin", "admin"] as UserRole[] },
+  { title: "Coupons", url: "/coupons", icon: Ticket, roles: ["super_admin", "admin"] as UserRole[] },
+  { title: "Reviews", url: "/reviews", icon: Star, roles: ["super_admin", "admin", "moderator"] as UserRole[] },
+  { title: "Users", url: "/users", icon: Shield, roles: ["super_admin"] as UserRole[] },
+  { title: "Account", url: "/account", icon: User, roles: ["super_admin", "admin", "moderator", "customer"] as UserRole[] },
 ];
 
 export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
+  const { auth } = usePage<{ auth: { user: AuthUser | null } }>().props;
+  const role = auth.user?.role ?? "customer";
+  const items = mainNav.filter((item) => item.roles.includes(role));
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -46,7 +53,7 @@ export function AppSidebar() {
           {!collapsed && <SidebarGroupLabel className="text-sidebar-muted text-[11px] uppercase tracking-widest font-semibold mb-1">Menu</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNav.map((item) => (
+              {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className="h-10">
                     <NavLink

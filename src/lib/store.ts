@@ -1,5 +1,33 @@
 // Simple localStorage-based store for demo data
 
+export type UserRole = 'super_admin' | 'admin' | 'moderator' | 'customer';
+
+export interface AuthUser {
+  id: number;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  role: UserRole;
+  emailVerifiedAt: string | null;
+  phoneVerifiedAt: string | null;
+  canAccessAdminPanel: boolean;
+  isSuperAdmin: boolean;
+}
+
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  createdAt: string | null;
+}
+
+export interface RoleOption {
+  value: UserRole;
+  label: string;
+}
+
 export interface Product {
   id: string;
   name: string;

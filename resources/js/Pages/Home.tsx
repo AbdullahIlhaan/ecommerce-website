@@ -1,4 +1,5 @@
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, usePage } from "@inertiajs/react";
+import type { AuthUser } from "@/lib/store";
 import {
   ChevronRight,
   Flame,
@@ -72,6 +73,11 @@ function BrandLogo() {
 }
 
 export default function Home() {
+  const { auth } = usePage<{ auth: { user: AuthUser | null } }>().props;
+  const accountHref = auth.user ? "/account" : "/login";
+  const accountLabel = auth.user ? auth.user.name : "Login";
+  const accountSubLabel = auth.user ? auth.user.role.replace("_", " ") : "Register / Sign in";
+
   return (
     <>
       <Head title="Home" />
@@ -166,15 +172,16 @@ export default function Home() {
                   <Bell className="h-5 w-5" />
                 </button>
 
-                <div className="flex items-center gap-3 rounded-full border border-[#d9bfd2] bg-white px-2 py-1 shadow-[0_12px_30px_-24px_rgba(94,23,71,0.55)]">
+                <Link href={accountHref} className="flex items-center gap-3 rounded-full border border-[#d9bfd2] bg-white px-2 py-1 shadow-[0_12px_30px_-24px_rgba(94,23,71,0.55)]">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#c32c30] to-[#9d2a5f] text-sm font-bold text-white">
-                    M
+                    {auth.user ? auth.user.name.slice(0, 1).toUpperCase() : "A"}
                   </div>
                   <div className="hidden sm:block">
                     <div className="text-[11px] uppercase tracking-[0.3em] text-[#928680]">Account</div>
-                    <div className="text-lg font-semibold leading-none text-[#2f2f35]">My Account</div>
+                    <div className="text-lg font-semibold leading-none text-[#2f2f35]">{accountLabel}</div>
+                    <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-[#928680]">{accountSubLabel}</div>
                   </div>
-                </div>
+                </Link>
               </div>
             </div>
           </div>
