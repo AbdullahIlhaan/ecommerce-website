@@ -28,6 +28,18 @@ export interface RoleOption {
   label: string;
 }
 
+export interface DashboardNavigationItem {
+  title: string;
+  url: string;
+  icon: string;
+  exact: boolean;
+}
+
+export interface DashboardNavigationGroup {
+  label: string;
+  items: DashboardNavigationItem[];
+}
+
 export interface Product {
   id: string;
   name: string;

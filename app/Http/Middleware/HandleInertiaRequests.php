@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\DashboardNavigation;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -34,6 +35,9 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
+            ],
+            'navigation' => [
+                'dashboard' => fn () => DashboardNavigation::forUser($request->user()),
             ],
         ];
     }
