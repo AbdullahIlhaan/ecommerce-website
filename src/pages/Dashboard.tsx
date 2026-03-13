@@ -1,0 +1,118 @@
+import { Link, usePage } from "@inertiajs/react";
+import { Product, Order, Customer, Review } from "@/lib/store";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/shared/PageHeader";
+import {
+  Package, ShoppingCart, Users, DollarSign, TrendingUp,
+  TrendingDown, Star, AlertCircle
+} from "lucide-react";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+
+export default function Dashboard() {
+  const { products, orders, customers, reviews } = usePage<{
+    products: Product[];
+    orders: Order[];
+    customers: Customer[];
+    reviews: Review[];
+  }>().props;
+
+  const totalRevenue = orders.filter(o => o.paymentStatus === 'paid').reduce((s, o) => s + o.total, 0);
+  const pendingOrders = orders.filter(o => o.status === 'pending').length;
+  const lowStock = products.filter(p => p.stock < 10).length;
+  const pendingReviews = reviews.filter(r => r.status === 'pending').length;
+
+  const stats = [
+    { title: "Total Revenue", value: `$${totalRevenue.toLocaleString('en', { minimumFractionDigits: 2 })}`, icon: DollarSign, change: "+12.5%", up: true, color: "text-success" },
+    { title: "Orders", value: orders.length.toString(), icon: ShoppingCart, change: `${pendingOrders} pending`, up: true, color: "text-info" },
+    { title: "Products", value: products.length.toString(), icon: Package, change: `${lowStock} low stock`, up: false, color: "text-primary" },
+    { title: "Customers", value: customers.length.toString(), icon: Users, change: "+3 this week", up: true, color: "text-warning" },
+  ];
+
+  return (
+    <div className="animate-fade-in">
+      <PageHeader title="Dashboard" description="Overview of your store performance" />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {stats.map((stat) => (
+          <Card key={stat.title} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-muted-foreground">{stat.title}</span>
+                <div className={`rounded-lg p-2 bg-muted ${stat.color}`}>
+                  <stat.icon className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="flex items-center gap-1 mt-1">
+                {stat.up ? <TrendingUp className="h-3 w-3 text-success" /> : <TrendingDown className="h-3 w-3 text-warning" />}
+                <span className="text-xs text-muted-foreground">{stat.change}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold flex items-center justify-between">
+              Recent Orders
+              <Link href="/orders" className="text-xs text-primary font-medium hover:underline">View all</Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y">
+              {orders.slice(0, 5).map((order) => (
+                <div key={order.id} className="flex items-center justify-between px-6 py-3">
+                  <div>
+                    <p className="text-sm font-medium">#{order.id.slice(0, 6).toUpperCase()}</p>
+                    <p className="text-xs text-muted-foreground">{order.items.length} item(s)</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold">${order.total.toFixed(2)}</span>
+                    <StatusBadge status={order.status} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold">Alerts</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {lowStock > 0 && (
+              <div className="flex items-center gap-3 rounded-lg border border-warning/30 bg-warning/5 p-3">
+                <AlertCircle className="h-5 w-5 text-warning shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">{lowStock} product(s) low on stock</p>
+                  <p className="text-xs text-muted-foreground">Review inventory levels</p>
+                </div>
+              </div>
+            )}
+            {pendingOrders > 0 && (
+              <div className="flex items-center gap-3 rounded-lg border border-info/30 bg-info/5 p-3">
+                <ShoppingCart className="h-5 w-5 text-info shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">{pendingOrders} order(s) awaiting processing</p>
+                  <p className="text-xs text-muted-foreground">Process orders to avoid delays</p>
+                </div>
+              </div>
+            )}
+            {pendingReviews > 0 && (
+              <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <Star className="h-5 w-5 text-primary shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">{pendingReviews} review(s) pending moderation</p>
+                  <p className="text-xs text-muted-foreground">Approve or reject new reviews</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
