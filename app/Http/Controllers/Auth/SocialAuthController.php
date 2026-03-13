@@ -38,7 +38,7 @@ class SocialAuthController extends Controller
             Auth::login($account->user);
             $request->session()->regenerate();
 
-            return to_route($account->user->canAccessAdminPanel() ? 'dashboard' : 'account');
+            return to_route('home');
         }
 
         $email = $providerUser->getEmail() ?: sprintf('%s_%s@example.invalid', $provider, $providerUser->getId());
@@ -66,7 +66,7 @@ class SocialAuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return to_route($user->canAccessAdminPanel() ? 'dashboard' : 'account');
+        return to_route('home');
     }
 
     private function driver(string $provider)

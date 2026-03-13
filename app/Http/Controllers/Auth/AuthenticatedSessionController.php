@@ -36,9 +36,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(
-            $request->user()?->canAccessAdminPanel() ? route('dashboard') : route('account'),
-        );
+        return redirect()->intended(route('home'));
     }
 
     public function destroy(Request $request): RedirectResponse

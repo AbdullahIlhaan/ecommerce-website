@@ -39,6 +39,6 @@ class RegisteredUserController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return to_route('account');
+        return to_route('home');
     }
 }

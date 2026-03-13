@@ -59,7 +59,7 @@ class PhoneAuthController extends Controller
         Auth::login($user, true);
         $request->session()->regenerate();
 
-        return to_route($user->canAccessAdminPanel() ? 'dashboard' : 'account');
+        return to_route('home');
     }
 
     public function requestVerificationCode(Request $request): RedirectResponse

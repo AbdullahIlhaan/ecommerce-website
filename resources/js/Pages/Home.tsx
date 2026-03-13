@@ -74,9 +74,19 @@ function BrandLogo() {
 
 export default function Home() {
   const { auth } = usePage<{ auth: { user: AuthUser | null } }>().props;
-  const accountHref = auth.user ? "/account" : "/login";
+  const accountHref = auth.user
+    ? auth.user.canAccessAdminPanel
+      ? "/dashboard"
+      : "/account"
+    : "/login";
   const accountLabel = auth.user ? auth.user.name : "Login";
   const accountSubLabel = auth.user ? auth.user.role.replace("_", " ") : "Register / Sign in";
+  const primaryCtaHref = auth.user
+    ? auth.user.canAccessAdminPanel
+      ? "/dashboard"
+      : "/account"
+    : "/login";
+  const primaryCtaLabel = auth.user ? (auth.user.canAccessAdminPanel ? "Open Dashboard" : "My Account") : "Sign In";
 
   return (
     <>
@@ -84,7 +94,7 @@ export default function Home() {
 
       <div className="min-h-screen bg-[#fcf8f5] text-[#2f2f35]">
         <header className="hidden border-b border-black/5 bg-[#f6f4f1] md:block">
-          <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-4 px-4 text-[13px] text-[#665d58] sm:px-6 lg:px-8">
+          <div className="page_container flex h-9 items-center justify-between gap-4 px-4 text-[13px] text-[#665d58] sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-5">
               <a href="#" className="shrink-0 transition hover:text-[#2f2f35]">
                 Support Center
@@ -115,7 +125,7 @@ export default function Home() {
         </header>
 
         <header className="sticky top-0 z-30 border-b border-[#e8ddd6] bg-[#fffdfa]/95 backdrop-blur-xl">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="page_container px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-4 py-5 lg:flex-row lg:items-center lg:gap-6">
               <div className="flex shrink-0 items-center justify-between">
                 <BrandLogo />
@@ -177,8 +187,8 @@ export default function Home() {
                     {auth.user ? auth.user.name.slice(0, 1).toUpperCase() : "A"}
                   </div>
                   <div className="hidden sm:block">
-                    <div className="text-[11px] uppercase tracking-[0.3em] text-[#928680]">Account</div>
-                    <div className="text-lg font-semibold leading-none text-[#2f2f35]">{accountLabel}</div>
+                    {/* <div className="text-[11px] uppercase tracking-[0.3em] text-[#928680]">Account</div> */}
+                    <div className="text-md font-semibold leading-none text-[#2f2f35]">{accountLabel}</div>
                     <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-[#928680]">{accountSubLabel}</div>
                   </div>
                 </Link>
@@ -187,7 +197,7 @@ export default function Home() {
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <main className="page_container px-4 py-8 sm:px-6 lg:px-8">
           <section className="space-y-5">
             <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
               <aside className="overflow-hidden rounded-[1.6rem] border border-[#ecd9d1] bg-white shadow-[0_22px_60px_-36px_rgba(15,23,42,0.25)]">
@@ -245,7 +255,7 @@ export default function Home() {
                         Cross-border shopping made simple
                       </div>
 
-                      <h1 className="max-w-xl text-4xl font-black leading-[1.02] tracking-tight text-white sm:text-5xl lg:text-[3.7rem]">
+                      <h1 className="max-w-xl text-3xl font-black leading-[1.02] tracking-tight text-white sm:text-4xl lg:text-[3rem]">
                         Pay in BDT.
                         <span className="block text-[#3f3f46]">Shop the world.</span>
                       </h1>
@@ -256,10 +266,10 @@ export default function Home() {
 
                       <div className="mt-8 flex flex-wrap gap-3">
                         <Link
-                          href="/dashboard"
+                          href={primaryCtaHref}
                           className="inline-flex items-center rounded-xl border-0 bg-white px-6 py-3 text-[15px] font-semibold text-[#c32c30] shadow-lg transition hover:bg-white/90"
                         >
-                          Start Shopping
+                          {primaryCtaLabel}
                         </Link>
                         <a
                           href="#highlights"
@@ -357,7 +367,7 @@ export default function Home() {
                       <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-[#c32c30]/10 text-[#c32c30]">
                         <item.icon className="h-5 w-5" />
                       </div>
-                      <h3 className="mt-4 text-2xl font-bold tracking-tight text-[#2f2f35]">{item.title}</h3>
+                      <h3 className="mt-4 text-lg font-medium tracking-tight text-[#2f2f35]">{item.title}</h3>
                       <p className="mt-3 text-[15px] leading-7 text-[#2f2f35]/65">{item.description}</p>
                     </article>
                   ))}
@@ -368,7 +378,7 @@ export default function Home() {
         </main>
 
         <footer className="mt-10 px-4 pb-6 text-[#2f2f35] sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
+          <div className="page_container">
             <div className="overflow-hidden rounded-[1.8rem] border border-[#ead9d2] bg-white shadow-[0_24px_60px_-44px_rgba(15,23,42,0.28)]">
               <div className="grid gap-8 px-6 py-10 md:grid-cols-2 lg:grid-cols-5 lg:px-10">
                 <div className="lg:col-span-2">
