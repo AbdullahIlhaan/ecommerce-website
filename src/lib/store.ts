@@ -70,6 +70,18 @@ export interface Brand {
   createdAt: string;
 }
 
+export interface HeroBanner {
+  id: string;
+  title: string;
+  subtitle: string;
+  buttonLabel: string;
+  buttonUrl: string;
+  imagePath: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface Customer {
   id: string;
   name: string;

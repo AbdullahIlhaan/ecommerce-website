@@ -10,16 +10,34 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HeroBannerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
+use App\Models\Category;
+use App\Models\HeroBanner;
+use App\Support\DashboardData;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => Inertia::render('Home'))->name('home');
+Route::get('/', fn () => Inertia::render('Home', [
+    'categories' => DashboardData::categories(
+        Category::query()
+            ->orderByRaw('case when parent_id is null then 0 else 1 end')
+            ->orderBy('name')
+            ->get()
+    ),
+    'heroBanner' => DashboardData::heroBanner(
+        HeroBanner::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->latest()
+            ->first()
+    ),
+]))->name('home');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -91,6 +109,11 @@ Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
     Route::post('/brands', [BrandController::class, 'store'])->name('brands.store');
     Route::put('/brands/{brand}', [BrandController::class, 'update'])->name('brands.update');
     Route::delete('/brands/{brand}', [BrandController::class, 'destroy'])->name('brands.destroy');
+
+    Route::get('/hero-banners', [HeroBannerController::class, 'index'])->name('hero-banners.index');
+    Route::post('/hero-banners', [HeroBannerController::class, 'store'])->name('hero-banners.store');
+    Route::put('/hero-banners/{heroBanner}', [HeroBannerController::class, 'update'])->name('hero-banners.update');
+    Route::delete('/hero-banners/{heroBanner}', [HeroBannerController::class, 'destroy'])->name('hero-banners.destroy');
 
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');

@@ -31,14 +31,14 @@ export default function Login() {
       <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fde6d7,transparent_40%),linear-gradient(180deg,#fcf8f5_0%,#f5efe9_100%)] px-4 py-10">
         <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-[2rem] border border-[#ead8d0] bg-white/80 p-8 shadow-[0_30px_80px_-44px_rgba(15,23,42,0.25)] backdrop-blur">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#c32c30]">ShopAdmin Access</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-primary">ShopAdmin Access</p>
             <h1 className="mt-4 text-4xl font-black tracking-tight text-[#2f2f35]">Sign in with email, phone, or social login.</h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-[#5c534e]">
               Super admins can create and manage all users. Customers can sign in to their account or use social login for quick access.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild className="bg-[#c32c30] hover:bg-[#a9262a]">
+              <Button asChild className="bg-primary hover:bg-brand-hover">
                 <a href="/auth/google/redirect">Continue with Google</a>
               </Button>
               <Button asChild variant="outline">

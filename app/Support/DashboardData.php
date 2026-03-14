@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Customer;
+use App\Models\HeroBanner;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Review;
@@ -32,6 +33,40 @@ class DashboardData
             'parentId' => $category->parent_id,
             'createdAt' => $category->created_at?->toDateString(),
         ])->all();
+    }
+
+    public static function heroBanners(Collection $heroBanners): array
+    {
+        return $heroBanners->map(fn (HeroBanner $heroBanner) => [
+            'id' => $heroBanner->id,
+            'title' => $heroBanner->title,
+            'subtitle' => $heroBanner->subtitle ?? '',
+            'buttonLabel' => $heroBanner->button_label ?? '',
+            'buttonUrl' => $heroBanner->button_url ?? '',
+            'imagePath' => $heroBanner->image_path,
+            'sortOrder' => $heroBanner->sort_order,
+            'isActive' => (bool) $heroBanner->is_active,
+            'createdAt' => $heroBanner->created_at?->toDateString(),
+        ])->all();
+    }
+
+    public static function heroBanner(?HeroBanner $heroBanner): ?array
+    {
+        if ($heroBanner === null) {
+            return null;
+        }
+
+        return [
+            'id' => $heroBanner->id,
+            'title' => $heroBanner->title,
+            'subtitle' => $heroBanner->subtitle ?? '',
+            'buttonLabel' => $heroBanner->button_label ?? '',
+            'buttonUrl' => $heroBanner->button_url ?? '',
+            'imagePath' => $heroBanner->image_path,
+            'sortOrder' => $heroBanner->sort_order,
+            'isActive' => (bool) $heroBanner->is_active,
+            'createdAt' => $heroBanner->created_at?->toDateString(),
+        ];
     }
 
     public static function customers(Collection $customers): array

@@ -57,6 +57,7 @@ class DashboardNavigation
                 'items' => [
                     self::item('Products', 'products.index', 'Package', [UserRole::SuperAdmin, UserRole::Admin]),
                     self::item('Categories', 'categories.index', 'FolderTree', [UserRole::SuperAdmin, UserRole::Admin]),
+                    self::item('Hero Banners', 'hero-banners.index', 'Images', [UserRole::SuperAdmin, UserRole::Admin]),
                     self::item('Brands', 'brands.index', 'Award', [UserRole::SuperAdmin, UserRole::Admin]),
                 ],
             ],
