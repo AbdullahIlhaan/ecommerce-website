@@ -1,5 +1,5 @@
 import { Link, Head, usePage, router } from "@inertiajs/react";
-import { useState, useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Heart,
   Bell,
@@ -37,6 +37,18 @@ type StorefrontLayoutProps = {
   title?: string;
 };
 
+type SearchSuggestion = {
+  id: string;
+  name: string;
+  sku: string;
+  price: number;
+  salePrice: number | null;
+  stock: number;
+  image: string;
+  brand: { name: string; slug: string } | null;
+  category: { name: string; slug: string } | null;
+};
+
 function BrandLogo() {
   return (
     <Link href="/" className="inline-flex items-center gap-3">
@@ -54,7 +66,11 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchSuggestion[]>([]);
   const { itemCount } = useCart();
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
   const { auth, categories } = usePage<{
     auth: { user: AuthUser | null };
     categories?: Category[];
@@ -96,8 +112,75 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
-    router.get('/shop', { search: searchQuery }, { preserveState: false });
+    const trimmedSearch = searchQuery.trim();
+    if (!trimmedSearch) return;
+
+    setIsSearchOpen(false);
+    router.get('/shop', { search: trimmedSearch }, { preserveState: false });
+  };
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!searchContainerRef.current?.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
+
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim();
+
+    if (trimmedQuery.length < 1) {
+      setSearchResults([]);
+      setIsSearchLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      setIsSearchLoading(true);
+
+      try {
+        const response = await fetch(`/shop/search/suggestions?search=${encodeURIComponent(trimmedQuery)}`, {
+          headers: {
+            Accept: "application/json",
+          },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Search request failed with status ${response.status}`);
+        }
+
+        const data = await response.json() as { products?: SearchSuggestion[] };
+        setSearchResults(data.products ?? []);
+        setIsSearchOpen(true);
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        setSearchResults([]);
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsSearchLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchQuery]);
+
+  const handleSuggestionSelect = (productId: string) => {
+    setIsSearchOpen(false);
+    router.visit(`/products/${productId}`);
   };
 
   return (
@@ -108,6 +191,11 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
       <header className="hidden border-b border-border/60 bg-muted/30 md:block">
         <div className="page_container flex h-9 items-center justify-between gap-4 px-4 text-[13px] text-muted-foreground sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-5">
+            {title !== "Home" && (
+              <Link href="/" className="shrink-0 font-semibold transition hover:text-foreground">
+                Home
+              </Link>
+            )}
             <a href="#" className="shrink-0 transition hover:text-foreground">Support Center</a>
           </div>
 
@@ -142,7 +230,8 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
             {/* Search Bar */}
             <div className="flex-1">
               <form onSubmit={handleSearch} className="flex w-full items-center gap-2">
-                <div className="flex min-w-0 flex-1 items-center overflow-hidden rounded-full border border-border bg-white shadow-sm ring-2 ring-primary/5 focus-within:ring-primary/20 sm:rounded-2xl sm:border-2 sm:border-primary sm:bg-card sm:ring-0">
+                <div ref={searchContainerRef} className="relative flex min-w-0 flex-1">
+                  <div className="flex min-w-0 flex-1 items-center overflow-hidden rounded-full border border-border bg-white shadow-sm ring-2 ring-primary/5 focus-within:ring-primary/20 sm:rounded-2xl sm:border-2 sm:border-primary sm:bg-card sm:ring-0">
                   <div className="hidden border-r border-border bg-accent/40 pl-4 pr-2 sm:flex">
                     <select className="h-12 min-w-[8.5rem] border-0 bg-transparent px-0 text-[15px] font-medium text-foreground focus:outline-none">
                       <option>All Countries</option>
@@ -156,6 +245,16 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                       placeholder="Search for products, brands and more..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => {
+                        if (searchQuery.trim().length >= 1) {
+                          setIsSearchOpen(true);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          setIsSearchOpen(false);
+                        }
+                      }}
                       className="h-10 w-full border-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 sm:h-12 sm:text-[15px]"
                     />
                     <button type="submit" className="text-primary sm:hidden">
@@ -165,6 +264,107 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                   <button type="submit" className="interactive hidden h-12 bg-primary px-7 text-[15px] font-semibold text-primary-foreground sm:block transition-colors hover:bg-primary/90">
                     Search
                   </button>
+                </div>
+                  {isSearchOpen && (
+                    <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-50 overflow-hidden rounded-[1.75rem] border border-border bg-card/95 shadow-[0_28px_60px_-20px_rgba(15,23,42,0.28)] backdrop-blur-xl">
+                      <div className="border-b border-border/70 bg-gradient-to-r from-primary/10 via-background to-background px-5 py-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-black uppercase tracking-[0.24em] text-primary/70">Smart Search</p>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {isSearchLoading ? "Looking for the best matches..." : `Results for "${searchQuery.trim()}"`}
+                            </p>
+                          </div>
+                          <button
+                            type="submit"
+                            className="hidden rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary transition hover:bg-primary hover:text-primary-foreground sm:inline-flex"
+                          >
+                            See all
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="max-h-[28rem] overflow-y-auto p-3">
+                        {isSearchLoading ? (
+                          <div className="space-y-2 p-2">
+                            {Array.from({ length: 4 }).map((_, index) => (
+                              <div key={index} className="flex items-center gap-4 rounded-2xl border border-border/60 px-3 py-3">
+                                <div className="h-16 w-16 animate-pulse rounded-2xl bg-muted" />
+                                <div className="flex-1 space-y-2">
+                                  <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+                                  <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
+                                  <div className="h-3 w-1/4 animate-pulse rounded bg-muted" />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : searchResults.length > 0 ? (
+                          <div className="space-y-2">
+                            {searchResults.map((product) => {
+                              const displayPrice = product.salePrice ?? product.price;
+                              const hasDiscount = product.salePrice !== null && product.salePrice < product.price;
+
+                              return (
+                                <button
+                                  key={product.id}
+                                  type="button"
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onClick={() => handleSuggestionSelect(product.id)}
+                                  className="flex w-full items-center gap-4 rounded-[1.35rem] border border-transparent px-3 py-3 text-left transition hover:border-primary/20 hover:bg-primary/5"
+                                >
+                                  <img
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="h-16 w-16 rounded-2xl border border-border object-cover"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="min-w-0">
+                                        <p className="line-clamp-1 text-sm font-bold text-foreground">{product.name}</p>
+                                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                          {product.brand && <span>{product.brand.name}</span>}
+                                          {product.category && <span className="rounded-full bg-muted px-2 py-0.5">{product.category.name}</span>}
+                                          {product.sku && <span>SKU: {product.sku}</span>}
+                                        </div>
+                                      </div>
+                                      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+                                    </div>
+                                    <div className="mt-3 flex items-center gap-2">
+                                      <span className="text-sm font-black text-primary">BDT {displayPrice.toLocaleString()}</span>
+                                      {hasDiscount && (
+                                        <span className="text-xs font-medium text-muted-foreground line-through">
+                                          BDT {product.price.toLocaleString()}
+                                        </span>
+                                      )}
+                                      <span
+                                        className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${
+                                          product.stock > 0
+                                            ? "bg-emerald-500/10 text-emerald-700"
+                                            : "bg-destructive/10 text-destructive"
+                                        }`}
+                                      >
+                                        {product.stock > 0 ? "In stock" : "Out of stock"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center rounded-[1.35rem] border border-dashed border-border px-6 py-12 text-center">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                              <Search className="h-6 w-6" />
+                            </div>
+                            <p className="mt-4 text-base font-bold text-foreground">No direct matches found</p>
+                            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                              Try a different keyword, brand name, SKU, or continue to the full results page.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <button type="button" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white border border-border sm:hidden">
                   <Camera className="h-5 w-5" />

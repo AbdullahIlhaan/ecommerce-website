@@ -67,6 +67,7 @@ Route::get('/', fn () => Inertia::render('Home', [
 ]))->name('home');
 
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
+Route::get('/shop/search/suggestions', [ShopController::class, 'suggestions'])->name('shop.suggestions');
 Route::get('/categories/all', [ShopController::class, 'categories'])->name('shop.categories');
 Route::get('/products/{product}', [ShopController::class, 'show'])->name('shop.show');
 Route::get('/checkout', [ShopController::class, 'checkout'])->name('shop.checkout');

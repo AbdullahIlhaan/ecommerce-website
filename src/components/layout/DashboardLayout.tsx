@@ -32,6 +32,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-border/70 bg-background/95 px-4 py-3 backdrop-blur md:px-6">
             <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
               <SidebarTrigger className="rounded-full lg:hidden" />
+              <Link href="/" className="text-sm font-semibold text-muted-foreground transition hover:text-foreground">
+                Home
+              </Link>
               <div className="relative hidden md:block">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input

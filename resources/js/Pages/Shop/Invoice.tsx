@@ -1,4 +1,4 @@
-import { Head } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import { Printer, Download, ShoppingBag, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
@@ -22,6 +22,11 @@ type Order = {
   items: OrderItem[];
   subtotal: number;
   tax: number;
+  deliveryCharge: number;
+  deliveryZone: string | null;
+  deliveryCity: string | null;
+  deliveryAddress: string | null;
+  deliveryLocationLabel: string | null;
   total: number;
   status: string;
   paymentStatus: string;
@@ -83,6 +88,9 @@ export default function Invoice({ order }: { order: Order }) {
         {/* Actions - Hidden on print */}
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4 print:hidden print-hidden">
           <div className="flex items-center gap-2">
+            <Link href="/" className="text-sm font-semibold text-muted-foreground transition hover:text-foreground">
+              Home
+            </Link>
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
               <ShoppingBag className="h-5 w-5" />
             </div>
@@ -141,6 +149,16 @@ export default function Invoice({ order }: { order: Order }) {
                   <div className="text-muted-foreground font-medium">{order.customer?.email}</div>
                   <div className="text-muted-foreground font-medium">{order.customer?.phone}</div>
                 </div>
+                {order.deliveryAddress && (
+                  <div className="mt-5 space-y-1">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Delivery Address</h3>
+                    {order.deliveryLocationLabel && <div className="font-semibold text-foreground">{order.deliveryLocationLabel}</div>}
+                    <div className="text-muted-foreground font-medium">{order.deliveryAddress}</div>
+                    <div className="text-muted-foreground font-medium">
+                      {order.deliveryCity} · {order.deliveryZone === "inside_dhaka" ? "Inside Dhaka" : "Outside Dhaka"}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="sm:text-right">
                 <h3 className="mb-4 text-xs font-black uppercase tracking-widest text-muted-foreground">Order Info</h3>
@@ -196,8 +214,8 @@ export default function Invoice({ order }: { order: Order }) {
                 <span className="font-bold text-foreground">BDT {order.subtotal.toLocaleString()}</span>
               </div>
               <div className="flex w-full max-w-[280px] justify-between text-sm">
-                <span className="font-medium text-muted-foreground">Tax / Processing</span>
-                <span className="font-bold text-foreground">BDT {order.tax.toLocaleString()}</span>
+                <span className="font-medium text-muted-foreground">Delivery Charge</span>
+                <span className="font-bold text-foreground">BDT {order.deliveryCharge.toLocaleString()}</span>
               </div>
               <div className="mt-2 flex w-full max-w-[280px] justify-between border-t border-border pt-4 text-xl">
                 <span className="font-black text-foreground">Total Paid</span>

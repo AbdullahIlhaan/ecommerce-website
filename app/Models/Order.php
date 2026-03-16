@@ -20,12 +20,22 @@ class Order extends Model
         'total',
         'status',
         'payment_status',
+        'delivery_zone',
+        'delivery_charge',
+        'delivery_city',
+        'delivery_address',
+        'delivery_location_label',
+        'delivery_latitude',
+        'delivery_longitude',
     ];
 
     protected $casts = [
         'subtotal' => 'decimal:2',
         'tax' => 'decimal:2',
         'total' => 'decimal:2',
+        'delivery_charge' => 'decimal:2',
+        'delivery_latitude' => 'decimal:7',
+        'delivery_longitude' => 'decimal:7',
     ];
 
     public function customer(): BelongsTo

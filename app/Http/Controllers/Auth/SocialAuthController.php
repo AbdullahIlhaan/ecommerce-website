@@ -79,6 +79,12 @@ class SocialAuthController extends Controller
             return $driver->scopes(['openid', 'profile', 'email']);
         }
 
-        return $driver->scopes(['email']);
+        if ($provider === 'facebook') {
+            // public_profile is required by Meta Graph API to get name & avatar.
+            // stateless() avoids OAuth state/session mismatch errors with Facebook.
+            return $driver->scopes(['public_profile', 'email'])->stateless();
+        }
+
+        return $driver;
     }
 }
