@@ -69,7 +69,7 @@ export default function ReviewsPage() {
             <Input placeholder="Search reviews..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
@@ -81,34 +81,60 @@ export default function ReviewsPage() {
         {filtered.length === 0 ? (
           <EmptyState title="No reviews" description="Reviews will appear here when customers leave feedback" icon={<Star className="h-8 w-8 text-muted-foreground" />} />
         ) : (
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Product</TableHead><TableHead>Customer</TableHead><TableHead>Rating</TableHead>
-              <TableHead>Comment</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {filtered.map(r => (
-                <TableRow key={r.id}>
-                  <TableCell className="font-medium">{r.productName}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.customerName}</TableCell>
-                  <TableCell><StarRating rating={r.rating} /></TableCell>
-                  <TableCell className="max-w-xs truncate text-sm">{r.comment}</TableCell>
-                  <TableCell><StatusBadge status={r.status} /></TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      {r.status === 'pending' && (
+          <>
+            <div className="space-y-3 md:hidden">
+              {filtered.map((r) => (
+                <article key={r.id} className="rounded-2xl border border-border bg-background p-4">
+                  <div className="space-y-2">
+                    <div className="font-medium">{r.productName}</div>
+                    <div className="text-sm text-muted-foreground">{r.customerName}</div>
+                    <StarRating rating={r.rating} />
+                    <p className="text-sm text-muted-foreground">{r.comment}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge status={r.status} />
+                      {r.status === "pending" && (
                         <>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-success" onClick={() => handleApprove(r.id)}><Check className="h-3.5 w-3.5" /></Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleReject(r.id)}><X className="h-3.5 w-3.5" /></Button>
+                          <Button variant="outline" size="sm" className="text-success" onClick={() => handleApprove(r.id)}><Check className="h-4 w-4" />Approve</Button>
+                          <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleReject(r.id)}><X className="h-4 w-4" />Reject</Button>
                         </>
                       )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(r.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(r.id)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </div>
+                </article>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Product</TableHead><TableHead>Customer</TableHead><TableHead>Rating</TableHead>
+                  <TableHead>Comment</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {filtered.map(r => (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-medium">{r.productName}</TableCell>
+                      <TableCell className="text-muted-foreground">{r.customerName}</TableCell>
+                      <TableCell><StarRating rating={r.rating} /></TableCell>
+                      <TableCell className="max-w-xs truncate text-sm">{r.comment}</TableCell>
+                      <TableCell><StatusBadge status={r.status} /></TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          {r.status === 'pending' && (
+                            <>
+                              <Button variant="ghost" size="icon" className="text-success" onClick={() => handleApprove(r.id)}><Check className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleReject(r.id)}><X className="h-4 w-4" /></Button>
+                            </>
+                          )}
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(r.id)}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </CardContent></Card>
       <ConfirmModal open={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={handleDelete} />

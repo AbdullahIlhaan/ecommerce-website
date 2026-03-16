@@ -65,34 +65,55 @@ export default function BrandsPage() {
     <div className="animate-fade-in">
       <PageHeader title="Brands" description="Manage product brands" actionLabel="Add Brand" onAction={openCreate} />
       <Card><CardContent className="p-4">
-        <div className="relative mb-4">
+        <div className="relative mb-4 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search brands..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 max-w-sm" />
+          <Input placeholder="Search brands..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
         {filtered.length === 0 ? (
           <EmptyState title="No brands" description="Add your first brand" actionLabel="Add Brand" onAction={openCreate} icon={<Award className="h-8 w-8 text-muted-foreground" />} />
         ) : (
-          <Table>
-            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Slug</TableHead><TableHead>Created</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-            <TableBody>
-              {filtered.map(b => (
-                <TableRow key={b.id}>
-                  <TableCell className="font-medium">{b.name}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{b.slug}</TableCell>
-                  <TableCell className="text-muted-foreground text-sm">{b.createdAt}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(b)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(b.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                  </TableCell>
-                </TableRow>
+          <>
+            <div className="space-y-3 md:hidden">
+              {filtered.map((b) => (
+                <article key={b.id} className="rounded-2xl border border-border bg-background p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-medium">{b.name}</div>
+                      <div className="mt-1 font-mono text-xs text-muted-foreground">{b.slug}</div>
+                      <div className="mt-2 text-sm text-muted-foreground">{b.createdAt}</div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(b)}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(b.id)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  </div>
+                </article>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Slug</TableHead><TableHead>Created</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {filtered.map(b => (
+                    <TableRow key={b.id}>
+                      <TableCell className="font-medium">{b.name}</TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{b.slug}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{b.createdAt}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(b)}><Pencil className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(b.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </CardContent></Card>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader><DialogTitle>{editing ? "Edit Brand" : "New Brand"}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')})} /></div>

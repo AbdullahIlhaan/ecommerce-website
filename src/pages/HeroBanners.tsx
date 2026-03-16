@@ -15,25 +15,17 @@ import { Search, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type HeroBannerForm = {
-  title: string;
-  subtitle: string;
-  buttonLabel: string;
-  buttonUrl: string;
   sortOrder: string;
   isActive: boolean;
-  image: File | null;
-  imagePreview: string;
+  images: File[];
+  imagePreviews: string[];
 };
 
 const emptyForm: HeroBannerForm = {
-  title: "",
-  subtitle: "",
-  buttonLabel: "",
-  buttonUrl: "",
   sortOrder: "0",
   isActive: true,
-  image: null,
-  imagePreview: "",
+  images: [],
+  imagePreviews: [],
 };
 
 export default function HeroBannersPage() {
@@ -45,7 +37,10 @@ export default function HeroBannersPage() {
   const [form, setForm] = useState<HeroBannerForm>(emptyForm);
 
   const filtered = useMemo(
-    () => heroBanners.filter((banner) => banner.title.toLowerCase().includes(search.toLowerCase())),
+    () => heroBanners.filter((banner) => 
+      banner.title.toLowerCase().includes(search.toLowerCase()) || 
+      String(banner.sortOrder).includes(search)
+    ),
     [heroBanners, search],
   );
 
@@ -62,47 +57,91 @@ export default function HeroBannersPage() {
   const openEdit = (banner: HeroBanner) => {
     setEditing(banner);
     setForm({
-      title: banner.title,
-      subtitle: banner.subtitle ?? "",
-      buttonLabel: banner.buttonLabel ?? "",
-      buttonUrl: banner.buttonUrl ?? "",
       sortOrder: String(banner.sortOrder ?? 0),
       isActive: banner.isActive,
-      image: null,
-      imagePreview: banner.imagePath,
+      images: [],
+      imagePreviews: banner.imagePaths && banner.imagePaths.length > 0 ? banner.imagePaths : [banner.imagePath],
     });
     setFormOpen(true);
   };
 
-  const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0] ?? null;
+  const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      // Format validation
+      if (file.type !== "image/webp") {
+        toast({ title: "Invalid format", description: "Only .webp images are accepted for Hero Banners.", variant: "destructive" });
+        event.target.value = "";
+        return;
+      }
+
+      // Resolution validation
+      const isValidResolution = await new Promise<boolean>((resolve) => {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => {
+          const valid = img.width === 1920 && img.height === 800;
+          URL.revokeObjectURL(img.src);
+          resolve(valid);
+        };
+      });
+
+      if (!isValidResolution) {
+        toast({ 
+          title: "Invalid resolution", 
+          description: "Image must be exactly 1920x800. Please resize your image.", 
+          variant: "destructive" 
+        });
+        event.target.value = "";
+        return;
+      }
+    }
+
+    // Revoke old object URLs to avoid memory leaks
+    form.imagePreviews.forEach(preview => {
+      if (preview.startsWith("blob:")) URL.revokeObjectURL(preview);
+    });
 
     setForm((current) => ({
       ...current,
-      image: file,
-      imagePreview: file ? URL.createObjectURL(file) : current.imagePreview,
+      images: files,
+      imagePreviews: files.map((file) => URL.createObjectURL(file)),
     }));
   };
 
-  const handleSave = () => {
-    if (!form.title) {
-      toast({ title: "Title is required", variant: "destructive" });
-      return;
-    }
+  const removeImage = (index: number) => {
+    setForm((current) => {
+      const newImages = [...current.images];
+      const newPreviews = [...current.imagePreviews];
+      
+      if (newPreviews[index].startsWith("blob:")) {
+        URL.revokeObjectURL(newPreviews[index]);
+      }
+      
+      newImages.splice(index, 1);
+      newPreviews.splice(index, 1);
+      
+      return {
+        ...current,
+        images: newImages,
+        imagePreviews: newPreviews,
+      };
+    });
+  };
 
-    if (!editing && !form.image) {
-      toast({ title: "Banner image is required", variant: "destructive" });
+  const handleSave = () => {
+    if (!editing && form.images.length === 0) {
+      toast({ title: "At least one banner image is required", variant: "destructive" });
       return;
     }
 
     const data = {
-      title: form.title,
-      subtitle: form.subtitle,
-      buttonLabel: form.buttonLabel,
-      buttonUrl: form.buttonUrl,
+      title: "Hero Banner", // Generic fallback if backend requires it
       sortOrder: parseInt(form.sortOrder || "0", 10) || 0,
       isActive: form.isActive ? 1 : 0,
-      image: form.image,
+      images: form.images,
       _method: editing ? "put" : "post",
     };
 
@@ -134,93 +173,114 @@ export default function HeroBannersPage() {
       <PageHeader title="Hero Banners" description="Manage homepage hero banners" actionLabel="Add Banner" onAction={openCreate} />
       <Card>
         <CardContent className="p-4">
-          <div className="relative mb-4">
+          <div className="relative mb-4 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search hero banners..." value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm pl-9" />
+            <Input placeholder="Search hero banners..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
 
           {filtered.length === 0 ? (
             <EmptyState title="No hero banners" description="Create the first homepage banner" actionLabel="Add Banner" onAction={openCreate} icon={<ImagePlus className="h-8 w-8 text-muted-foreground" />} />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Banner</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Sort</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              <div className="space-y-3 md:hidden">
                 {filtered.map((banner) => (
-                  <TableRow key={banner.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <img src={banner.imagePath} alt={banner.title} className="h-14 w-24 rounded-md object-cover" />
-                        <div>
-                          <div className="font-medium">{banner.title}</div>
-                          <div className="text-xs text-muted-foreground">{banner.subtitle || "No subtitle"}</div>
-                        </div>
+                  <article key={banner.id} className="rounded-2xl border border-border bg-background p-4">
+                    <img src={banner.imagePath} alt={banner.title} className="aspect-[16/9] w-full rounded-xl object-cover" />
+                    <div className="mt-3 flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-medium">{banner.title}</div>
+                        <div className="text-sm text-muted-foreground">{banner.subtitle || "No subtitle"}</div>
+                        <div className="mt-2 text-sm text-muted-foreground">Sort {banner.sortOrder} • {banner.isActive ? "Active" : "Inactive"} • {(banner.imagePaths?.length ?? 1)} image(s)</div>
                       </div>
-                    </TableCell>
-                    <TableCell>{banner.isActive ? "Active" : "Inactive"}</TableCell>
-                    <TableCell>{banner.sortOrder}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{banner.createdAt}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(banner)}><Pencil className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(banner.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                    </TableCell>
-                  </TableRow>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(banner)}><Pencil className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(banner.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
+                    </div>
+                  </article>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Banner</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Sort</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((banner) => (
+                      <TableRow key={banner.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <img src={banner.imagePath} alt={banner.title} className="h-14 w-24 rounded-md object-cover" />
+                            <div>
+                              <div className="font-medium">{banner.title}</div>
+                              <div className="text-xs text-muted-foreground">{banner.subtitle || "No subtitle"}</div>
+                              <div className="mt-1 text-xs text-muted-foreground">{(banner.imagePaths?.length ?? 1)} image(s)</div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{banner.isActive ? "Active" : "Inactive"}</TableCell>
+                        <TableCell>{banner.sortOrder}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{banner.createdAt}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(banner)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(banner.id)}><Trash2 className="h-4 w-4" /></Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Hero Banner" : "New Hero Banner"}</DialogTitle>
           </DialogHeader>
 
-          <div className="grid gap-4 py-2">
-            <div>
-              <Label>Title *</Label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            </div>
-            <div>
-              <Label>Subtitle</Label>
-              <Input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} />
-            </div>
+          <div className="grid gap-4 overflow-y-auto px-1 py-4" style={{ maxHeight: "calc(90vh - 120px)" }}>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <Label>Button Label</Label>
-                <Input value={form.buttonLabel} onChange={(e) => setForm({ ...form, buttonLabel: e.target.value })} />
+                <Label htmlFor="banner-sort">Sort Order</Label>
+                <Input id="banner-sort" type="number" min="0" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} />
+                <p className="mt-1 text-xs text-muted-foreground">Lower numbers appear first in the slideshow.</p>
               </div>
-              <div>
-                <Label>Button URL</Label>
-                <Input value={form.buttonUrl} onChange={(e) => setForm({ ...form, buttonUrl: e.target.value })} placeholder="/products" />
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label>Sort Order</Label>
-                <Input type="number" min="0" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} />
-              </div>
-              <div className="flex items-end gap-3">
-                <Switch checked={form.isActive} onCheckedChange={(checked) => setForm({ ...form, isActive: checked })} />
-                <Label>Active on homepage</Label>
+              <div className="flex items-center gap-3 pt-6">
+                <Switch id="banner-active" checked={form.isActive} onCheckedChange={(checked) => setForm({ ...form, isActive: checked })} />
+                <Label htmlFor="banner-active" className="cursor-pointer">Active on homepage</Label>
               </div>
             </div>
             <div>
-              <Label>Banner Image {editing ? "" : "*"}</Label>
-              <Input type="file" accept="image/*" onChange={handleImageChange} />
+              <Label htmlFor="banner-images">Banner Images {editing ? "" : "*"}</Label>
+              <Input id="banner-images" type="file" accept="image/webp" multiple onChange={handleImageChange} className="cursor-pointer" />
+              <p className="mt-1 text-xs font-medium text-red-500">Required: WebP format only | Exact size: 1920x800px</p>
             </div>
-            {form.imagePreview ? (
-              <div className="overflow-hidden rounded-lg border border-border bg-muted/20">
-                <img src={form.imagePreview} alt="Hero banner preview" className="h-56 w-full object-cover" />
+            {form.imagePreviews.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {form.imagePreviews.map((imagePreview, index) => (
+                  <div key={imagePreview} className="group relative aspect-video overflow-hidden rounded-xl border border-border bg-muted/20">
+                    <img src={imagePreview} alt="Hero banner preview" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 hover:bg-black/70"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                      <p className="truncate text-[10px] text-white">Preview Image {index + 1}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : null}
           </div>

@@ -35,7 +35,7 @@ class HeroBannerController extends Controller
 
     public function destroy(HeroBanner $heroBanner): RedirectResponse
     {
-        $this->deleteImage($heroBanner->image_path);
+        $this->deleteImages($heroBanner->image_paths ?: array_filter([$heroBanner->image_path]));
         $heroBanner->delete();
 
         return to_route('hero-banners.index')->with('success', 'Hero banner deleted.');
@@ -50,14 +50,18 @@ class HeroBannerController extends Controller
             'buttonUrl' => ['nullable', 'string', 'max:255'],
             'sortOrder' => ['nullable', 'integer', 'min:0'],
             'isActive' => ['nullable', 'boolean'],
-            'image' => [$heroBanner ? 'nullable' : 'required', 'image', 'max:4096'],
+            'images' => [$heroBanner ? 'nullable' : 'required', 'array', 'min:1'],
+            'images.*' => ['image', 'mimes:webp', 'dimensions:width=1920,height=800', 'max:4096'],
+        ], [
+            'images.*.mimes' => 'Only .webp images are accepted for Hero Banners.',
+            'images.*.dimensions' => 'Hero Banner images must be exactly 1920x800 pixels.',
         ]);
 
-        $imagePath = $heroBanner?->image_path;
+        $imagePaths = $heroBanner?->image_paths ?: array_filter([$heroBanner?->image_path]);
 
-        if ($request->hasFile('image')) {
-            $this->deleteImage($imagePath);
-            $imagePath = $this->storeImage($request);
+        if ($request->hasFile('images')) {
+            $this->deleteImages($imagePaths);
+            $imagePaths = $this->storeImages($request);
         }
 
         return [
@@ -65,37 +69,43 @@ class HeroBannerController extends Controller
             'subtitle' => $data['subtitle'] ?? '',
             'button_label' => $data['buttonLabel'] ?? '',
             'button_url' => $data['buttonUrl'] ?? '',
-            'image_path' => $imagePath,
+            'image_path' => $imagePaths[0] ?? $heroBanner?->image_path,
+            'image_paths' => $imagePaths,
             'sort_order' => $data['sortOrder'] ?? 0,
             'is_active' => (bool) ($data['isActive'] ?? false),
         ];
     }
 
-    private function storeImage(Request $request): string
+    private function storeImages(Request $request): array
     {
-        $file = $request->file('image');
         $directory = public_path('uploads/hero-banners');
 
         if (! File::exists($directory)) {
             File::makeDirectory($directory, 0755, true);
         }
 
-        $filename = uniqid('hero-banner-', true).'.'.$file->getClientOriginalExtension();
-        $file->move($directory, $filename);
+        return collect($request->file('images', []))
+            ->map(function ($file) use ($directory) {
+                $filename = uniqid('hero-banner-', true).'.'.$file->getClientOriginalExtension();
+                $file->move($directory, $filename);
 
-        return '/uploads/hero-banners/'.$filename;
+                return '/uploads/hero-banners/'.$filename;
+            })
+            ->all();
     }
 
-    private function deleteImage(?string $imagePath): void
+    private function deleteImages(array $imagePaths): void
     {
-        if (! $imagePath || ! str_starts_with($imagePath, '/uploads/hero-banners/')) {
-            return;
-        }
+        foreach ($imagePaths as $imagePath) {
+            if (! $imagePath || ! str_starts_with($imagePath, '/uploads/hero-banners/')) {
+                continue;
+            }
 
-        $absolutePath = public_path(ltrim($imagePath, '/'));
+            $absolutePath = public_path(ltrim($imagePath, '/'));
 
-        if (File::exists($absolutePath)) {
-            File::delete($absolutePath);
+            if (File::exists($absolutePath)) {
+                File::delete($absolutePath);
+            }
         }
     }
 }

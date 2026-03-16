@@ -14,6 +14,7 @@ use App\Http\Controllers\HeroBannerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\ShopController;
 use App\Http\Controllers\UserController;
 use App\Models\Category;
 use App\Models\HeroBanner;
@@ -30,14 +31,50 @@ Route::get('/', fn () => Inertia::render('Home', [
             ->orderBy('name')
             ->get()
     ),
-    'heroBanner' => DashboardData::heroBanner(
+    'heroBanners' => DashboardData::heroBanners(
         HeroBanner::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->latest()
-            ->first()
+            ->get()
     ),
+    'latestProducts' => DashboardData::products(
+        \App\Models\Product::query()
+            ->where('status', 'active')
+            ->latest()
+            ->limit(10)
+            ->get()
+    ),
+    'flashSaleProducts' => DashboardData::products(
+        \App\Models\Product::query()
+            ->where('status', 'active')
+            ->whereNotNull('sale_price')
+            ->whereRaw('sale_price < price')
+            ->limit(10)
+            ->get()
+    ),
+    'trendingProducts' => DashboardData::products(
+        \App\Models\Product::query()
+            ->where('status', 'active')
+            ->inRandomOrder() // Simple way to simulate trending for now
+            ->limit(10)
+            ->get()
+    ),
+    'brands' => \App\Models\Brand::query()
+        ->orderBy('name')
+        ->limit(12)
+        ->get(),
 ]))->name('home');
+
+Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
+Route::get('/categories/all', [ShopController::class, 'categories'])->name('shop.categories');
+Route::get('/products/{product}', [ShopController::class, 'show'])->name('shop.show');
+Route::get('/checkout', [ShopController::class, 'checkout'])->name('shop.checkout');
+Route::post('/checkout', [ShopController::class, 'storeOrder'])->name('shop.checkout.store');
+Route::get('/checkout/success', [ShopController::class, 'checkoutSuccess'])->name('shop.checkout.success');
+Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
+
+Route::view('/offline', 'offline')->name('offline');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');

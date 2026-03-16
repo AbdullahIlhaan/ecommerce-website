@@ -44,6 +44,7 @@ class DashboardData
             'buttonLabel' => $heroBanner->button_label ?? '',
             'buttonUrl' => $heroBanner->button_url ?? '',
             'imagePath' => $heroBanner->image_path,
+            'imagePaths' => $heroBanner->image_paths ?: array_filter([$heroBanner->image_path]),
             'sortOrder' => $heroBanner->sort_order,
             'isActive' => (bool) $heroBanner->is_active,
             'createdAt' => $heroBanner->created_at?->toDateString(),
@@ -63,6 +64,7 @@ class DashboardData
             'buttonLabel' => $heroBanner->button_label ?? '',
             'buttonUrl' => $heroBanner->button_url ?? '',
             'imagePath' => $heroBanner->image_path,
+            'imagePaths' => $heroBanner->image_paths ?: array_filter([$heroBanner->image_path]),
             'sortOrder' => $heroBanner->sort_order,
             'isActive' => (bool) $heroBanner->is_active,
             'createdAt' => $heroBanner->created_at?->toDateString(),
@@ -117,10 +119,19 @@ class DashboardData
 
     public static function orders(Collection $orders): array
     {
-        return $orders->map(fn (Order $order) => [
+        return $orders->map(fn (Order $order) => self::order($order))->all();
+    }
+
+    public static function order(Order $order): array
+    {
+        return [
             'id' => $order->id,
             'customerId' => $order->customer_id,
-            'customerName' => $order->customer?->name ?? 'Unknown',
+            'customer' => $order->customer ? [
+                'name' => $order->customer->name,
+                'email' => $order->customer->email,
+                'phone' => $order->customer->phone,
+            ] : null,
             'items' => $order->items->map(fn ($item) => [
                 'productId' => $item->product_id,
                 'productName' => $item->product_name,
@@ -133,7 +144,8 @@ class DashboardData
             'status' => $order->status,
             'paymentStatus' => $order->payment_status,
             'createdAt' => $order->created_at?->toDateString(),
-        ])->all();
+            'formattedDate' => $order->created_at?->format('F d, Y'),
+        ];
     }
 
     public static function reviews(Collection $reviews): array

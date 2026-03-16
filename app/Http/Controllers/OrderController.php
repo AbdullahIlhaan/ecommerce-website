@@ -35,4 +35,11 @@ class OrderController extends Controller
 
         return to_route('orders.index')->with('success', 'Order updated.');
     }
+
+    public function invoice(Order $order): Response
+    {
+        return Inertia::render('Shop/Invoice', [
+            'order' => DashboardData::order($order->load(['customer', 'items'])),
+        ]);
+    }
 }

@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { router, usePage } from "@inertiajs/react";
+import { useCallback, useMemo, useState } from "react";
+import { router, usePage, Link } from "@inertiajs/react";
 import { Order, Customer } from "@/lib/store";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Search, Eye, ShoppingCart, FileText } from "lucide-react";
+import { Search, Eye, ShoppingCart, FileText, Printer } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 export default function OrdersPage() {
@@ -23,13 +23,13 @@ export default function OrdersPage() {
   const [newStatus, setNewStatus] = useState("");
   const [newPaymentStatus, setNewPaymentStatus] = useState("");
 
-  const getCustomerName = (id: string) => customers.find(c => c.id === id)?.name || "Unknown";
+  const getCustomerName = useCallback((id: string) => customers.find(c => c.id === id)?.name || "Unknown", [customers]);
 
   const filtered = useMemo(() => orders.filter(o => {
     const matchSearch = o.id.includes(search) || getCustomerName(o.customerId).toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || o.status === statusFilter;
     return matchSearch && matchStatus;
-  }), [orders, search, statusFilter, customers]);
+  }), [orders, search, statusFilter, getCustomerName]);
 
   const handleExportPDF = () => {
     const content = orders.map(o => `Order #${o.id.slice(0,6).toUpperCase()} | ${getCustomerName(o.customerId)} | $${o.total.toFixed(2)} | ${o.status}`).join('\n');
@@ -68,7 +68,7 @@ export default function OrdersPage() {
             <Input placeholder="Search orders..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
@@ -83,39 +83,72 @@ export default function OrdersPage() {
         {filtered.length === 0 ? (
           <EmptyState title="No orders" description="Orders will appear here" icon={<ShoppingCart className="h-8 w-8 text-muted-foreground" />} />
         ) : (
-          <Table>
-            <TableHeader><TableRow>
-              <TableHead>Order</TableHead><TableHead>Customer</TableHead><TableHead>Items</TableHead>
-              <TableHead>Total</TableHead><TableHead>Status</TableHead><TableHead>Payment</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow></TableHeader>
-            <TableBody>
-              {filtered.map(o => (
-                <TableRow key={o.id}>
-                  <TableCell className="font-mono text-xs font-medium">#{o.id.slice(0,6).toUpperCase()}</TableCell>
-                  <TableCell>{getCustomerName(o.customerId)}</TableCell>
-                  <TableCell>{o.items.length}</TableCell>
-                  <TableCell className="font-semibold">${o.total.toFixed(2)}</TableCell>
-                  <TableCell><StatusBadge status={o.status} /></TableCell>
-                  <TableCell><StatusBadge status={o.paymentStatus} /></TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewOrder(o)}><Eye className="h-3.5 w-3.5" /></Button>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setEditStatusOrder(o); setNewStatus(o.status); setNewPaymentStatus(o.paymentStatus); }}>Update</Button>
-                  </TableCell>
-                </TableRow>
+          <>
+            <div className="space-y-3 md:hidden">
+              {filtered.map((o) => (
+                <article key={o.id} className="rounded-2xl border border-border bg-background p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-2">
+                      <div className="font-mono text-sm font-medium">#{o.id.slice(0, 6).toUpperCase()}</div>
+                      <div className="text-sm text-muted-foreground">{getCustomerName(o.customerId)} • {o.items.length} items</div>
+                      <div className="font-semibold">BDT {o.total.toFixed(2)}</div>
+                      <div className="flex flex-wrap gap-2">
+                        <StatusBadge status={o.status} />
+                        <StatusBadge status={o.paymentStatus} />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => setViewOrder(o)}><Eye className="h-4 w-4" /></Button>
+                      <Link href={`/orders/${o.id}/invoice`} target="_blank">
+                        <Button variant="ghost" size="icon" className="text-primary"><FileText className="h-4 w-4" /></Button>
+                      </Link>
+                      <Button variant="outline" size="sm" onClick={() => { setEditStatusOrder(o); setNewStatus(o.status); setNewPaymentStatus(o.paymentStatus); }}>Update</Button>
+                    </div>
+                  </div>
+                </article>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Order</TableHead><TableHead>Customer</TableHead><TableHead>Items</TableHead>
+                  <TableHead>Total</TableHead><TableHead>Status</TableHead><TableHead>Payment</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {filtered.map(o => (
+                    <TableRow key={o.id}>
+                      <TableCell className="font-mono text-xs font-medium">#{o.id.slice(0,6).toUpperCase()}</TableCell>
+                      <TableCell>{getCustomerName(o.customerId)}</TableCell>
+                      <TableCell>{o.items.length}</TableCell>
+                      <TableCell className="font-semibold">BDT {o.total.toFixed(2)}</TableCell>
+                      <TableCell><StatusBadge status={o.status} /></TableCell>
+                      <TableCell><StatusBadge status={o.paymentStatus} /></TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="icon" title="View Details" onClick={() => setViewOrder(o)}><Eye className="h-4 w-4" /></Button>
+                          <Link href={`/orders/${o.id}/invoice`} target="_blank">
+                            <Button variant="ghost" size="icon" title="View Invoice" className="text-primary"><FileText className="h-4 w-4" /></Button>
+                          </Link>
+                          <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setEditStatusOrder(o); setNewStatus(o.status); setNewPaymentStatus(o.paymentStatus); }}>Update</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </CardContent></Card>
 
       {/* View Order */}
       <Dialog open={!!viewOrder} onOpenChange={() => setViewOrder(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader><DialogTitle>Order #{viewOrder?.id.slice(0,6).toUpperCase()}</DialogTitle></DialogHeader>
           {viewOrder && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid gap-4 text-sm sm:grid-cols-2">
                 <div><span className="text-muted-foreground">Customer:</span> <span className="font-medium">{getCustomerName(viewOrder.customerId)}</span></div>
                 <div><span className="text-muted-foreground">Date:</span> <span className="font-medium">{viewOrder.createdAt}</span></div>
                 <div><span className="text-muted-foreground">Status:</span> <StatusBadge status={viewOrder.status} /></div>
@@ -129,16 +162,16 @@ export default function OrdersPage() {
                       <TableRow key={i}>
                         <TableCell className="text-sm">{item.productName}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
-                        <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">BDT {item.price.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
               <div className="text-right space-y-1 text-sm">
-                <div>Subtotal: <span className="font-medium">${viewOrder.subtotal.toFixed(2)}</span></div>
-                <div>Tax: <span className="font-medium">${viewOrder.tax.toFixed(2)}</span></div>
-                <div className="text-base font-bold">Total: ${viewOrder.total.toFixed(2)}</div>
+                <div>Subtotal: <span className="font-medium">BDT {viewOrder.subtotal.toFixed(2)}</span></div>
+                <div>Tax: <span className="font-medium">BDT {viewOrder.tax.toFixed(2)}</span></div>
+                <div className="text-base font-bold">Total: BDT {viewOrder.total.toFixed(2)}</div>
               </div>
             </div>
           )}
@@ -147,7 +180,7 @@ export default function OrdersPage() {
 
       {/* Update Status */}
       <Dialog open={!!editStatusOrder} onOpenChange={() => setEditStatusOrder(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader><DialogTitle>Update Order Status</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-2">
             <div>

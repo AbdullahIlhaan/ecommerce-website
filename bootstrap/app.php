@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddPwaHeaders;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -15,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             HandleInertiaRequests::class,
+            AddPwaHeaders::class,
         ]);
 
         $middleware->alias([

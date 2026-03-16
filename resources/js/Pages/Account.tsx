@@ -24,8 +24,8 @@ function Account() {
         {flash.error && <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{flash.error}</div>}
 
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Account</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Signed in as {user.name}. Your current role controls which parts of the dashboard you can use.</p>
+          <h1 className="text-fluid-title font-bold tracking-tight">My Account</h1>
+          <p className="mt-1 text-sm text-muted-foreground md:text-base">Signed in as {user.name}. Your current role controls which parts of the dashboard you can use.</p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -33,7 +33,7 @@ function Account() {
             <CardHeader>
               <CardTitle>Profile</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm">
+            <CardContent className="space-y-3 text-sm md:text-base">
               <div><span className="font-medium">Name:</span> {user.name}</div>
               <div><span className="font-medium">Email:</span> {user.email || "Not set"}</div>
               <div><span className="font-medium">Phone:</span> {user.phone || "Not set"}</div>
@@ -63,6 +63,7 @@ function Account() {
                 </div>
                 <Button
                   variant="outline"
+                  className="w-full sm:w-auto"
                   disabled={!user.email || !!user.emailVerifiedAt || emailForm.processing}
                   onClick={() => emailForm.post("/email/verification-notification", { preserveScroll: true })}
                 >
@@ -78,16 +79,16 @@ function Account() {
                     : "Request a 6-digit code and submit it here to verify your phone number."}
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Button variant="outline" disabled={!user.phone || !!user.phoneVerifiedAt} onClick={() => phoneForm.post("/phone/verification/request", { preserveScroll: true })}>
+                  <Button variant="outline" className="w-full sm:w-auto" disabled={!user.phone || !!user.phoneVerifiedAt} onClick={() => phoneForm.post("/phone/verification/request", { preserveScroll: true })}>
                     Request Phone Verification Code
                   </Button>
                 </div>
                 {!user.phoneVerifiedAt && (
-                  <div className="max-w-sm space-y-2">
+                  <div className="w-full max-w-sm space-y-2">
                     <Label htmlFor="phone-verification-code">Verification Code</Label>
-                    <Input id="phone-verification-code" value={phoneForm.data.code} onChange={(event) => phoneForm.setData("code", event.target.value)} />
+                    <Input id="phone-verification-code" inputMode="numeric" value={phoneForm.data.code} onChange={(event) => phoneForm.setData("code", event.target.value)} />
                     {phoneForm.errors.code && <p className="text-sm text-destructive">{phoneForm.errors.code}</p>}
-                    <Button disabled={phoneForm.processing} onClick={() => phoneForm.post("/phone/verification/verify", { preserveScroll: true })}>
+                    <Button className="w-full sm:w-auto" disabled={phoneForm.processing} onClick={() => phoneForm.post("/phone/verification/verify", { preserveScroll: true })}>
                       Verify Phone Number
                     </Button>
                   </div>

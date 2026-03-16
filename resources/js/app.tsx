@@ -1,5 +1,20 @@
 import { createInertiaApp } from "@inertiajs/react";
 import { createRoot } from "react-dom/client";
+import { registerSW } from "virtual:pwa-register";
+
+import { AppShell } from "@/components/shared/AppShell";
+import { applyTheme, resolveTheme } from "@/lib/theme";
+
+if (typeof window !== "undefined") {
+  applyTheme(resolveTheme());
+
+  registerSW({
+    immediate: true,
+    onOfflineReady() {
+      window.dispatchEvent(new CustomEvent("pwa:offline-ready"));
+    },
+  });
+}
 
 createInertiaApp({
   resolve: async (name) => {
@@ -8,7 +23,7 @@ createInertiaApp({
     return page.default;
   },
   setup({ el, App, props }) {
-    createRoot(el).render(<App {...props} />);
+    createRoot(el).render(<AppShell App={App} props={props as object} />);
   },
   progress: {
     color: "#0f766e",

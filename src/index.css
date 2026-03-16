@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -45,7 +45,11 @@
     --input: 220 13% 91%;
     --ring: 358 64% 47%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
+    --surface: 0 0% 100%;
+    --surface-muted: 220 20% 98%;
+    --text-soft: 220 10% 46%;
+    --text-strong: 220 25% 10%;
 
     --sidebar-background: 220 25% 10%;
     --sidebar-foreground: 220 14% 80%;
@@ -87,6 +91,10 @@
     --border: 220 20% 18%;
     --input: 220 20% 18%;
     --ring: 358 64% 47%;
+    --surface: 220 25% 10%;
+    --surface-muted: 220 22% 12%;
+    --text-soft: 220 10% 64%;
+    --text-strong: 220 14% 95%;
 
     --sidebar-background: 220 30% 5%;
     --sidebar-foreground: 220 14% 80%;
@@ -106,16 +114,73 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: "Geist", system-ui, sans-serif;
+    min-width: 320px;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100%;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(circle at top left, hsl(var(--primary) / 0.12), transparent 28%),
+      radial-gradient(circle at bottom right, hsl(var(--warning) / 0.08), transparent 24%),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)) 100%);
   }
 }
 
 @layer utilities {
   .page_container {
-    /* width: 100%; */
-    width: 1450px;
+    width: min(100%, 1450px);
     margin-left: auto;
     margin-right: auto;
+  }
+
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-x {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .surface-card {
+    background: hsl(var(--surface) / 0.88);
+    border: 1px solid hsl(var(--border));
+    backdrop-filter: blur(18px);
+  }
+
+  .text-fluid-display {
+    font-size: clamp(1.875rem, 4vw, 3.5rem);
+    line-height: 1.02;
+  }
+
+  .text-fluid-title {
+    font-size: clamp(1.25rem, 2vw, 2rem);
+  }
+
+  .text-fluid-body {
+    font-size: clamp(0.95rem, 1vw, 1.0625rem);
   }
 
   .scrollbar-thin {
@@ -126,5 +191,49 @@
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply bg-border rounded-full;
+  }
+
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-sheet {
+    border-radius: 1.5rem 1.5rem 0 0;
+  }
+}
+
+@layer components {
+  .app-shell {
+    @apply min-h-screen overflow-x-clip;
+  }
+
+  .interactive {
+    position: relative;
+    overflow: hidden;
+    transition:
+      transform 300ms ease,
+      background-color 300ms ease,
+      color 300ms ease,
+      border-color 300ms ease,
+      box-shadow 300ms ease;
+    touch-action: manipulation;
+  }
+
+  .interactive:active {
+    transform: scale(0.985);
+  }
+
+  .interactive::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgb(255 255 255 / 0.35) 0%, transparent 58%);
+    opacity: 0;
+    transition: opacity 220ms ease;
+    pointer-events: none;
+  }
+
+  .interactive:active::after {
+    opacity: 1;
   }
 }

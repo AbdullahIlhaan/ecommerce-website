@@ -17,6 +17,7 @@ class HeroBanner extends Model
         'button_label',
         'button_url',
         'image_path',
+        'image_paths',
         'sort_order',
         'is_active',
     ];
@@ -24,5 +25,6 @@ class HeroBanner extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'sort_order' => 'integer',
+        'image_paths' => 'array',
     ];
 }

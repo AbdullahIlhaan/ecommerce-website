@@ -77,6 +77,7 @@ export interface HeroBanner {
   buttonLabel: string;
   buttonUrl: string;
   imagePath: string;
+  imagePaths?: string[];
   sortOrder: number;
   isActive: boolean;
   createdAt: string;

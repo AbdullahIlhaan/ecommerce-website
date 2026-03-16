@@ -38,7 +38,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold text-sm">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
             S
           </div>
           {!collapsed && (
@@ -61,11 +61,11 @@ export function AppSidebar() {
 
                   return (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild className="h-10">
+                      <SidebarMenuButton asChild className="min-h-11">
                         <NavLink
                           to={item.url}
                           end={item.exact}
-                          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                           activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
                         >
                           <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -86,7 +86,7 @@ export function AppSidebar() {
           variant="ghost"
           size="sm"
           onClick={toggleSidebar}
-          className="w-full justify-center text-sidebar-muted hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
+          className="w-full justify-center rounded-xl text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
           <ChevronLeft className={`h-4 w-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
           {!collapsed && <span className="ml-2 text-xs">Collapse</span>}

@@ -17,7 +17,7 @@ export default function Register() {
     <>
       <Head title="Register" />
 
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fde6d7,transparent_40%),linear-gradient(180deg,#fcf8f5_0%,#f5efe9_100%)] px-4 py-10">
+      <div className="safe-top min-h-screen bg-[radial-gradient(circle_at_top,#fde6d7,transparent_40%),linear-gradient(180deg,#fcf8f5_0%,#f5efe9_100%)] px-4 py-8 md:py-10">
         <Card className="mx-auto max-w-xl border-[#ead8d0] bg-white/90 shadow-[0_30px_80px_-44px_rgba(15,23,42,0.25)]">
           <CardHeader>
             <CardTitle>Create customer account</CardTitle>

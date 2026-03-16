@@ -32,9 +32,9 @@ export default function Dashboard() {
     <div className="animate-fade-in">
       <PageHeader title="Dashboard" description="Overview of your store performance" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="hover:shadow-md transition-shadow">
+          <Card key={stat.title} className="border-border/80 bg-card/90 transition-shadow hover:shadow-md">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-muted-foreground">{stat.title}</span>
@@ -42,7 +42,7 @@ export default function Dashboard() {
                   <stat.icon className="h-4 w-4" />
                 </div>
               </div>
-              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="text-2xl font-bold md:text-3xl">{stat.value}</div>
               <div className="flex items-center gap-1 mt-1">
                 {stat.up ? <TrendingUp className="h-3 w-3 text-success" /> : <TrendingDown className="h-3 w-3 text-warning" />}
                 <span className="text-xs text-muted-foreground">{stat.change}</span>
@@ -52,7 +52,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center justify-between">
@@ -63,7 +63,7 @@ export default function Dashboard() {
           <CardContent className="p-0">
             <div className="divide-y">
               {orders.slice(0, 5).map((order) => (
-                <div key={order.id} className="flex items-center justify-between px-6 py-3">
+                <div key={order.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-medium">#{order.id.slice(0, 6).toUpperCase()}</p>
                     <p className="text-xs text-muted-foreground">{order.items.length} item(s)</p>
