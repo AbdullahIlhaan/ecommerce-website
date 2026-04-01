@@ -52,7 +52,7 @@ type HomeHeroBanner = {
 
 const highlights = [
   {
-    title: "Easy to use",
+    title: "Easy to use test test test",
     description: "Surf, select, and purchase. It's that easy to do cross border shopping now.",
     icon: ShoppingBag,
   },
