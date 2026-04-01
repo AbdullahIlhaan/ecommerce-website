@@ -28,7 +28,7 @@ class StopSsr extends Command
      */
     public function handle(HttpGateway $gateway): int
     {
-        $url = $gateway->getUrl('/shutdown');
+        $url = $gateway->getProductionUrl('/shutdown');
 
         $ch = curl_init($url);
         curl_exec($ch);

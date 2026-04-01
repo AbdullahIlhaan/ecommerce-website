@@ -76,8 +76,8 @@ const highlights = [
 function BrandLogo() {
   return (
     <Link href="/" className="inline-flex items-center gap-3">
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f26522] to-[#a12863] text-lg font-black text-white shadow-[0_12px_28px_-16px_rgba(162,40,99,0.6)]">
-        <img src="/images/logofbd.jpeg" alt="FutureBD logo" className="h-full w-full rounded-2xl object-cover" />
+      <div className="flex h-11 w-11 items-center justify-center rounded-[8px] bg-gradient-to-br from-[#f26522] to-[#a12863] text-lg font-black text-white shadow-[0_12px_28px_-16px_rgba(162,40,99,0.6)]">
+        <img src="/images/logofbd.jpeg" alt="FutureBD logo" className="h-full w-full rounded-[8px] object-cover" />
       </div>
       <div>
         <div className="text-lg font-black tracking-tight text-foreground">FutureBD</div>
@@ -140,7 +140,7 @@ export default function Home() {
       : "/account"
     : "/login";
   const accountLabel = auth.user ? auth.user.name : "Login";
-  const accountSubLabel = auth.user ? auth.user.role.replace("_", " ") : "Register / Sign in";
+  const accountSubLabel = auth.user ? auth.user.role.replace("_", " ") : "Register / Sign In";
   const primaryCtaHref = auth.user
     ? auth.user.canAccessAdminPanel
       ? "/dashboard"
@@ -170,13 +170,13 @@ export default function Home() {
       <section className="space-y-5">
         <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
           <aside className="relative hidden xl:block">
-            <div className="h-full overflow-hidden rounded-lg border border-border bg-card shadow-[0_22px_60px_-36px_rgba(15,23,42,0.25)]">
+            <div className="h-full overflow-hidden rounded-[8px] border border-border bg-card shadow-[0_22px_60px_-36px_rgba(15,23,42,0.25)]">
               <div className="flex items-center justify-between bg-primary px-5 py-3 text-white">
                 <div className="flex items-center gap-3">
                   <Menu className="h-5 w-5" />
                   <span className="text-lg font-black tracking-tight">Categories</span>
                 </div>
-                <Link href="/categories/all" className="interactive rounded-full px-3 py-1 text-xs font-bold bg-white/10 transition hover:bg-white/20">
+                <Link href="/categories/all" className="interactive rounded-[8px] px-3 py-1 text-xs font-bold bg-white/10 transition hover:bg-white/20">
                   View All
                 </Link>
               </div>
@@ -247,7 +247,7 @@ export default function Home() {
           
           {/*Hero Banner */}
           <div className="space-y-5">
-            <div className="overflow-hidden rounded-md border border-border bg-card shadow-[0_24px_60px_-36px_rgba(15,23,42,0.26)]">
+            <div className="overflow-hidden rounded-[8px] border border-border bg-card shadow-[0_24px_60px_-36px_rgba(15,23,42,0.26)]">
               {slides.length > 0 ? (
                 <div className="relative">
                   <div className="overflow-hidden">
@@ -317,25 +317,19 @@ export default function Home() {
       </section>
 
       {/* Why Choose Us */}
-      <section className="mt-16 hidden md:block">
-        <div className="rounded-[40px] bg-[#f8f9fa] dark:bg-card/30 p-8 sm:p-12 border border-border/50">
-          <div className="mb-10 text-center">
-             <h2 className="text-2xl font-black tracking-tight sm:text-4xl text-foreground">Why Shop With Us?</h2>
-             <p className="mt-2 text-muted-foreground">Experience the future of cross-border shopping with FutureBD</p>
-          </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {highlights.map((item, idx) => (
-              <article key={idx} className="flex flex-col items-center text-center space-y-4 group">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl shadow-primary/5 dark:bg-background transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
-                  <item.icon className="h-7 w-7 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black tracking-tight">{item.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-                </div>
-              </article>
-            ))}
-          </div>
+      <section className="mt-16">
+        <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+          {highlights.map((item, idx) => (
+            <article key={idx} className="flex flex-col items-center text-center space-y-4 group rounded-[8px] bg-[#f8f9fa] dark:bg-card/30 p-8 border border-border/50 transition-transform duration-500 hover:scale-105">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl shadow-primary/5 dark:bg-background transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
+                <item.icon className="h-7 w-7 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black tracking-tight">{item.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -344,7 +338,7 @@ export default function Home() {
         <section className="mt-16 space-y-8">
            <div className="flex items-center justify-between">
             <h2 className="text-2xl font-black tracking-tight sm:text-3xl">Top Brands</h2>
-            <Link href="/brands" className="text-sm font-bold text-primary hover:underline">See All</Link>
+            <Link href="/shop" className="text-sm font-bold text-primary hover:underline">See All</Link>
           </div>
           <div className="flex flex-wrap justify-center gap-4">
             {brands.map((brand) => (
@@ -438,7 +432,7 @@ export default function Home() {
         </div>
         
         {(latestProducts ?? []).length === 0 && (
-          <div className="flex min-h-[120px] items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/20 text-muted-foreground">
+          <div className="flex min-h-[120px] items-center justify-center rounded-[8px] border-2 border-dashed border-border bg-muted/20 text-muted-foreground">
             No products found.
           </div>
         )}

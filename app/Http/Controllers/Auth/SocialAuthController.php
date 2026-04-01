@@ -9,7 +9,6 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Laravel\Socialite\Facades\Socialite;
 use Throwable;
 
 class SocialAuthController extends Controller
@@ -18,11 +17,25 @@ class SocialAuthController extends Controller
 
     public function redirect(string $provider): RedirectResponse
     {
+        if (! $this->socialiteAvailable()) {
+            return to_route('login')->with(
+                'error',
+                'Social login is not available because the Socialite package is not installed.',
+            );
+        }
+
         return $this->driver($provider)->redirect();
     }
 
     public function callback(Request $request, string $provider): RedirectResponse
     {
+        if (! $this->socialiteAvailable()) {
+            return to_route('login')->with(
+                'error',
+                'Social login is not available because the Socialite package is not installed.',
+            );
+        }
+
         try {
             $providerUser = $this->driver($provider)->user();
         } catch (Throwable) {
@@ -73,7 +86,7 @@ class SocialAuthController extends Controller
     {
         abort_unless(in_array($provider, self::SUPPORTED_PROVIDERS, true), 404);
 
-        $driver = Socialite::driver($provider);
+        $driver = \Laravel\Socialite\Facades\Socialite::driver($provider);
 
         if ($provider === 'google') {
             return $driver->scopes(['openid', 'profile', 'email']);
@@ -86,5 +99,10 @@ class SocialAuthController extends Controller
         }
 
         return $driver;
+    }
+
+    private function socialiteAvailable(): bool
+    {
+        return class_exists(\Laravel\Socialite\Facades\Socialite::class);
     }
 }

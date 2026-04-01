@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Customer;
+use App\Models\HeroBanner;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -73,6 +74,22 @@ class DashboardSeeder extends Seeder
             ['id' => 'r2', 'product_id' => 'p3', 'product_name' => 'MacBook Pro 16"', 'customer_name' => 'Jane Smith', 'rating' => 4, 'comment' => 'Great laptop, a bit pricey', 'status' => 'approved', 'created_at' => '2024-03-08 00:00:00', 'updated_at' => '2024-03-08 00:00:00'],
             ['id' => 'r3', 'product_id' => 'p5', 'product_name' => 'Sony WH-1000XM5', 'customer_name' => 'Alice Brown', 'rating' => 5, 'comment' => 'Amazing noise cancellation!', 'status' => 'pending', 'created_at' => '2024-03-11 00:00:00', 'updated_at' => '2024-03-11 00:00:00'],
             ['id' => 'r4', 'product_id' => 'p4', 'product_name' => 'Air Jordan 1', 'customer_name' => 'Bob Wilson', 'rating' => 3, 'comment' => 'Good but runs small', 'status' => 'pending', 'created_at' => '2024-03-12 00:00:00', 'updated_at' => '2024-03-12 00:00:00'],
+        ]);
+
+        HeroBanner::query()->insert([
+            [
+                'id' => 'hb1',
+                'title' => 'Spring arrivals for everyday tech',
+                'subtitle' => 'Explore the latest devices, accessories, and seasonal deals.',
+                'button_label' => 'Shop Now',
+                'button_url' => '/shop',
+                'image_path' => '/images/herobg.jpeg',
+                'image_paths' => json_encode(['/images/herobg.jpeg']),
+                'sort_order' => 1,
+                'is_active' => true,
+                'created_at' => '2024-03-14 00:00:00',
+                'updated_at' => '2024-03-14 00:00:00',
+            ],
         ]);
     }
 }

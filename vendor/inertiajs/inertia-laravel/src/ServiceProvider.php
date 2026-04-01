@@ -2,13 +2,18 @@
 
 namespace Inertia;
 
+use Illuminate\Foundation\Http\Kernel;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 use Illuminate\Testing\TestResponse;
 use Illuminate\View\FileViewFinder;
 use Inertia\Ssr\Gateway;
 use Inertia\Ssr\HttpGateway;
+use Inertia\Ssr\SsrState;
 use Inertia\Support\Header;
 use Inertia\Testing\TestResponseMacros;
 use LogicException;
@@ -20,7 +25,9 @@ class ServiceProvider extends BaseServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(HttpGateway::class);
         $this->app->singleton(ResponseFactory::class);
+        $this->app->scoped(SsrState::class);
         $this->app->bind(Gateway::class, HttpGateway::class);
 
         $this->mergeConfigFrom(
@@ -28,7 +35,9 @@ class ServiceProvider extends BaseServiceProvider
             'inertia'
         );
 
+        $this->registerBladeComponents();
         $this->registerBladeDirectives();
+        $this->registerRedirectMacro();
         $this->registerRequestMacro();
         $this->registerRouterMacro();
         $this->registerTestingMacros();
@@ -37,16 +46,8 @@ class ServiceProvider extends BaseServiceProvider
         $this->app->bind('inertia.view-finder', function ($app) {
             return new FileViewFinder(
                 $app['files'],
-                $app['config']->get('inertia.page_paths'),
-                $app['config']->get('inertia.page_extensions')
-            );
-        });
-
-        $this->app->bind('inertia.testing.view-finder', function ($app) {
-            return new FileViewFinder(
-                $app['files'],
-                $app['config']->get('inertia.testing.page_paths'),
-                $app['config']->get('inertia.testing.page_extensions')
+                $app['config']->get('inertia.pages.paths'),
+                $app['config']->get('inertia.pages.extensions')
             );
         });
     }
@@ -57,10 +58,32 @@ class ServiceProvider extends BaseServiceProvider
     public function boot(): void
     {
         $this->registerConsoleCommands();
+        $this->configureMiddlewarePriority();
 
         $this->publishes([
             __DIR__.'/../config/inertia.php' => config_path('inertia.php'),
         ]);
+    }
+
+    /**
+     * Configure middleware priority to ensure Inertia can intercept
+     * redirect responses from other middleware (like throttle).
+     */
+    protected function configureMiddlewarePriority(): void
+    {
+        $this->app->afterResolving(Kernel::class, function (Kernel $kernel) {
+            $kernel->addToMiddlewarePriorityAfter(StartSession::class, Middleware::class);
+        });
+    }
+
+    /**
+     * Register Blade components for rendering Inertia head and body content.
+     */
+    protected function registerBladeComponents(): void
+    {
+        $this->callAfterResolving('blade.compiler', function () {
+            Blade::componentNamespace('Inertia\\View\\Components', 'inertia');
+        });
     }
 
     /**
@@ -91,6 +114,19 @@ class ServiceProvider extends BaseServiceProvider
             Commands\StopSsr::class,
             Commands\CheckSsr::class,
         ]);
+    }
+
+    /**
+     * Add a 'preserveFragment' method to redirect responses that signals
+     * the frontend to preserve the URL fragment across the redirect.
+     */
+    protected function registerRedirectMacro(): void
+    {
+        RedirectResponse::macro('preserveFragment', function () {
+            inertia()->preserveFragment();
+
+            return $this;
+        });
     }
 
     /**

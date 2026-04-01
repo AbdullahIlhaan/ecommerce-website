@@ -22,7 +22,7 @@
             })();
         </script>
         @viteReactRefresh
-        @vite(['resources/css/app.css', 'resources/js/app.tsx'])
+        @vite(['src/index.css', 'resources/js/app.tsx'])
         @inertiaHead
     </head>
     <body class="min-h-screen bg-background text-foreground">

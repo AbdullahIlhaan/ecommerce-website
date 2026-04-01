@@ -96,12 +96,14 @@ class ShopController extends Controller
 
     protected function applyProductSearch($query, string $search): void
     {
-        $query
-            ->where('name', 'like', '%' . $search . '%')
-            ->orWhere('sku', 'like', '%' . $search . '%')
-            ->orWhere('description', 'like', '%' . $search . '%')
-            ->orWhereHas('brand', fn ($brandQuery) => $brandQuery->where('name', 'like', '%' . $search . '%'))
-            ->orWhereHas('category', fn ($categoryQuery) => $categoryQuery->where('name', 'like', '%' . $search . '%'));
+        $query->where(function ($searchQuery) use ($search): void {
+            $searchQuery
+                ->where('name', 'like', '%' . $search . '%')
+                ->orWhere('sku', 'like', '%' . $search . '%')
+                ->orWhere('description', 'like', '%' . $search . '%')
+                ->orWhereHas('brand', fn ($brandQuery) => $brandQuery->where('name', 'like', '%' . $search . '%'))
+                ->orWhereHas('category', fn ($categoryQuery) => $categoryQuery->where('name', 'like', '%' . $search . '%'));
+        });
     }
 
     public function categories(): Response
@@ -206,13 +208,13 @@ class ShopController extends Controller
             ]);
         }
 
-        $orderId = \Illuminate\Support\Facades\DB::transaction(function() use ($data) {
+        $orderId = DB::transaction(function () use ($data) {
             $customer = Customer::firstOrCreate(
                 ['email' => $data['email']],
                 [
                     'name' => $data['name'],
                     'phone' => $data['phone'],
-                    'status' => 'active'
+                    'status' => 'active',
                 ]
             );
 

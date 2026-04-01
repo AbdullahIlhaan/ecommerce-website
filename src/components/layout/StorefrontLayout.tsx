@@ -86,7 +86,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
       : "/account"
     : "/login";
   const accountLabel = auth.user ? auth.user.name : "Login";
-  const accountSubLabel = auth.user ? auth.user.role.replace("_", " ") : "Register / Sign in";
+  const accountSubLabel = auth.user ? auth.user.role.replace("_", " ") : "";
   
   const primaryCtaHref = auth.user
     ? auth.user.canAccessAdminPanel
@@ -231,7 +231,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
             <div className="flex-1">
               <form onSubmit={handleSearch} className="flex w-full items-center gap-2">
                 <div ref={searchContainerRef} className="relative flex min-w-0 flex-1">
-                  <div className="flex min-w-0 flex-1 items-center overflow-hidden rounded-full border border-border bg-white shadow-sm ring-2 ring-primary/5 focus-within:ring-primary/20 sm:rounded-2xl sm:border-2 sm:border-primary sm:bg-card sm:ring-0">
+                  <div className="flex min-w-0 flex-1 items-center overflow-hidden rounded-full border border-border bg-white shadow-sm ring-2 ring-primary/5 focus-within:ring-primary/20 sm:rounded-[5px] sm:border-2 sm:border-primary sm:bg-card sm:ring-0">
                   <div className="hidden border-r border-border bg-accent/40 pl-4 pr-2 sm:flex">
                     <select className="h-12 min-w-[8.5rem] border-0 bg-transparent px-0 text-[15px] font-medium text-foreground focus:outline-none">
                       <option>All Countries</option>
@@ -395,7 +395,9 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                 </div>
                 <div className="hidden sm:block">
                   <div className="text-md font-semibold leading-none text-foreground">{accountLabel}</div>
-                  <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{accountSubLabel}</div>
+                  {accountSubLabel && (
+                    <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{accountSubLabel}</div>
+                  )}
                 </div>
               </Link>
             </div>
@@ -411,7 +413,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
       {/* Footer */}
       <footer className="mt-10 hidden px-4 pb-6 text-foreground md:block sm:px-6 lg:px-8">
         <div className="page_container">
-          <div className="overflow-hidden rounded-[1.8rem] border border-border bg-card shadow-sm">
+          <div className="overflow-hidden rounded-[8px] border-t-8 border border-border bg-card shadow-sm">
             <div className="grid gap-8 px-6 py-10 md:grid-cols-2 lg:grid-cols-5 lg:px-10">
               <div className="lg:col-span-2">
                 <BrandLogo />
@@ -454,7 +456,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
               </div>
             </div>
             <div className="border-t border-border bg-muted/20 px-6 py-5 text-center text-sm text-muted-foreground lg:px-10">
-              © 2018-2025 FutureBD. All rights reserved.
+              © 2018-2026 FutureBD. All rights reserved.
             </div>
           </div>
         </div>
