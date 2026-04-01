@@ -51,10 +51,7 @@ class HeroBannerController extends Controller
             'sortOrder' => ['nullable', 'integer', 'min:0'],
             'isActive' => ['nullable', 'boolean'],
             'images' => [$heroBanner ? 'nullable' : 'required', 'array', 'min:1'],
-            'images.*' => ['image', 'mimes:webp', 'dimensions:width=1920,height=800', 'max:4096'],
-        ], [
-            'images.*.mimes' => 'Only .webp images are accepted for Hero Banners.',
-            'images.*.dimensions' => 'Hero Banner images must be exactly 1920x800 pixels.',
+            'images.*' => ['image', 'max:8192'],
         ]);
 
         $imagePaths = $heroBanner?->image_paths ?: array_filter([$heroBanner?->image_path]);

@@ -1,6 +1,5 @@
 import { createInertiaApp } from "@inertiajs/react";
 import { createRoot } from "react-dom/client";
-import { registerSW } from "virtual:pwa-register";
 
 import { AppShell } from "@/components/shared/AppShell";
 import { applyTheme, resolveTheme } from "@/lib/theme";
@@ -8,12 +7,18 @@ import { applyTheme, resolveTheme } from "@/lib/theme";
 if (typeof window !== "undefined") {
   applyTheme(resolveTheme());
 
-  registerSW({
-    immediate: true,
-    onOfflineReady() {
-      window.dispatchEvent(new CustomEvent("pwa:offline-ready"));
-    },
-  });
+  if (import.meta.env.VITE_ENABLE_PWA === "true") {
+    const pwaRegisterModule = "virtual:pwa-register";
+
+    import(/* @vite-ignore */ pwaRegisterModule).then(({ registerSW }) => {
+      registerSW({
+        immediate: true,
+        onOfflineReady() {
+          window.dispatchEvent(new CustomEvent("pwa:offline-ready"));
+        },
+      });
+    });
+  }
 }
 
 createInertiaApp({

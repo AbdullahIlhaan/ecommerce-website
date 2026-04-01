@@ -38,8 +38,8 @@ export default function Login() {
         </div>
 
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
-          {/* Left Panel: Content & Value Prop */}
-          <div className="flex flex-col justify-center">
+          {/* Left Panel: Content & Value Prop (Hidden on Mobile) */}
+          <div className="hidden lg:flex flex-col justify-center">
             <Link href="/" className="mb-8 inline-flex items-center gap-3 active:scale-95 transition-transform w-fit">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f26522] to-[#a12863] text-lg font-black text-white shadow-xl">
                 <img src="/images/logofbd.jpeg" alt="FutureBD" className="h-full w-full rounded-2xl object-cover" />
@@ -97,6 +97,16 @@ export default function Login() {
 
           {/* Right Panel: Login Card */}
           <div className="flex flex-col justify-center">
+            {/* Mobile Logo (Shown only on small screens) */}
+            <div className="lg:hidden flex justify-center mb-8">
+              <Link href="/" className="inline-flex items-center gap-2 active:scale-95 transition-transform">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#f26522] to-[#a12863] text-white shadow-lg overflow-hidden">
+                  <img src="/images/logofbd.jpeg" alt="FutureBD" className="h-full w-full object-cover" />
+                </div>
+                <span className="text-xl font-black tracking-tight text-foreground">FutureBD</span>
+              </Link>
+            </div>
+
             <Card className="border-border bg-card/50 shadow-2xl backdrop-blur-md rounded-[2.5rem] overflow-hidden">
               <CardHeader className="pt-10 px-8">
                 <CardTitle className="text-2xl font-black tracking-tight">Sign In</CardTitle>
@@ -137,7 +147,7 @@ export default function Login() {
                     <div className="space-y-2">
                        <div className="flex items-center justify-between">
                         <Label htmlFor="password" className="font-bold text-foreground">Password</Label>
-                        <Link href="/forgot-password" size="sm" className="text-xs font-bold text-primary hover:underline">Forgot password?</Link>
+                        <Link href="/forgot-password" className="text-xs font-bold text-primary hover:underline">Forgot password?</Link>
                       </div>
                       <Input 
                         id="password" 

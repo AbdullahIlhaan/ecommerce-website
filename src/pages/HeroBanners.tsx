@@ -69,36 +69,6 @@ export default function HeroBannersPage() {
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
 
-    for (const file of files) {
-      // Format validation
-      if (file.type !== "image/webp") {
-        toast({ title: "Invalid format", description: "Only .webp images are accepted for Hero Banners.", variant: "destructive" });
-        event.target.value = "";
-        return;
-      }
-
-      // Resolution validation
-      const isValidResolution = await new Promise<boolean>((resolve) => {
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-        img.onload = () => {
-          const valid = img.width === 1920 && img.height === 800;
-          URL.revokeObjectURL(img.src);
-          resolve(valid);
-        };
-      });
-
-      if (!isValidResolution) {
-        toast({ 
-          title: "Invalid resolution", 
-          description: "Image must be exactly 1920x800. Please resize your image.", 
-          variant: "destructive" 
-        });
-        event.target.value = "";
-        return;
-      }
-    }
-
     // Revoke old object URLs to avoid memory leaks
     form.imagePreviews.forEach(preview => {
       if (preview.startsWith("blob:")) URL.revokeObjectURL(preview);
@@ -261,8 +231,7 @@ export default function HeroBannersPage() {
             </div>
             <div>
               <Label htmlFor="banner-images">Banner Images {editing ? "" : "*"}</Label>
-              <Input id="banner-images" type="file" accept="image/webp" multiple onChange={handleImageChange} className="cursor-pointer" />
-              <p className="mt-1 text-xs font-medium text-red-500">Required: WebP format only | Exact size: 1920x800px</p>
+              <Input id="banner-images" type="file" accept="image/*" multiple onChange={handleImageChange} className="cursor-pointer" />
             </div>
             {form.imagePreviews.length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2">
