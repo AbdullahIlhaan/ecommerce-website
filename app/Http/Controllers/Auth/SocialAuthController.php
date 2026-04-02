@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Support\SocialAuth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,15 +14,12 @@ use Throwable;
 
 class SocialAuthController extends Controller
 {
-    private const SUPPORTED_PROVIDERS = ['google', 'facebook'];
-
     public function redirect(string $provider): RedirectResponse
     {
-        if (! $this->socialiteAvailable()) {
-            return to_route('login')->with(
-                'error',
-                'Social login is not available because the Socialite package is not installed.',
-            );
+        abort_unless(SocialAuth::supports($provider), 404);
+
+        if (! SocialAuth::providerAvailable($provider)) {
+            return $this->unavailableProviderResponse($provider);
         }
 
         return $this->driver($provider)->redirect();
@@ -29,17 +27,16 @@ class SocialAuthController extends Controller
 
     public function callback(Request $request, string $provider): RedirectResponse
     {
-        if (! $this->socialiteAvailable()) {
-            return to_route('login')->with(
-                'error',
-                'Social login is not available because the Socialite package is not installed.',
-            );
+        abort_unless(SocialAuth::supports($provider), 404);
+
+        if (! SocialAuth::providerAvailable($provider)) {
+            return $this->unavailableProviderResponse($provider);
         }
 
         try {
             $providerUser = $this->driver($provider)->user();
         } catch (Throwable) {
-            return to_route('login')->with('error', 'Unable to authenticate with '.ucfirst($provider).'.');
+            return to_route('login')->with('error', 'Unable to authenticate with '.SocialAuth::label($provider).'.');
         }
 
         $account = SocialAccount::query()
@@ -84,7 +81,7 @@ class SocialAuthController extends Controller
 
     private function driver(string $provider)
     {
-        abort_unless(in_array($provider, self::SUPPORTED_PROVIDERS, true), 404);
+        abort_unless(SocialAuth::supports($provider), 404);
 
         $driver = \Laravel\Socialite\Facades\Socialite::driver($provider);
 
@@ -101,8 +98,8 @@ class SocialAuthController extends Controller
         return $driver;
     }
 
-    private function socialiteAvailable(): bool
+    private function unavailableProviderResponse(string $provider): RedirectResponse
     {
-        return class_exists(\Laravel\Socialite\Facades\Socialite::class);
+        return to_route('login')->with('error', SocialAuth::unavailableMessage($provider));
     }
 }

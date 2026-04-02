@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { formatPaymentMethod } from "@/lib/payments";
 
 type OrderItem = {
   productId: string;
@@ -30,6 +31,7 @@ type Order = {
   total: number;
   status: string;
   paymentStatus: string;
+  paymentMethod: string;
   formattedDate: string;
 };
 
@@ -152,7 +154,9 @@ export default function Invoice({ order }: { order: Order }) {
                 {order.deliveryAddress && (
                   <div className="mt-5 space-y-1">
                     <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Delivery Address</h3>
-                    {order.deliveryLocationLabel && <div className="font-semibold text-foreground">{order.deliveryLocationLabel}</div>}
+                    <div className="font-semibold text-foreground">
+                      {order.deliveryLocationLabel || "Manual address entry"}
+                    </div>
                     <div className="text-muted-foreground font-medium">{order.deliveryAddress}</div>
                     <div className="text-muted-foreground font-medium">
                       {order.deliveryCity} · {order.deliveryZone === "inside_dhaka" ? "Inside Dhaka" : "Outside Dhaka"}
@@ -174,6 +178,12 @@ export default function Invoice({ order }: { order: Order }) {
                      <span className="text-muted-foreground text-sm">Payment:</span>
                      <div className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
                         <span className="capitalize">{order.paymentStatus}</span>
+                     </div>
+                  </div>
+                  <div className="flex sm:justify-end items-center gap-2">
+                     <span className="text-muted-foreground text-sm">Method:</span>
+                     <div className="rounded-full bg-muted px-3 py-1 text-xs font-bold text-foreground">
+                        <span>{formatPaymentMethod(order.paymentMethod)}</span>
                      </div>
                   </div>
                 </div>
@@ -218,9 +228,14 @@ export default function Invoice({ order }: { order: Order }) {
                 <span className="font-bold text-foreground">BDT {order.deliveryCharge.toLocaleString()}</span>
               </div>
               <div className="mt-2 flex w-full max-w-[280px] justify-between border-t border-border pt-4 text-xl">
-                <span className="font-black text-foreground">Total Paid</span>
+                <span className="font-black text-foreground">Order Total</span>
                 <span className="font-black text-primary underline underline-offset-4">BDT {order.total.toLocaleString()}</span>
               </div>
+              {order.paymentStatus === "pending" && (
+                <div className="w-full max-w-[280px] text-right text-xs text-muted-foreground">
+                  Payment is still pending confirmation.
+                </div>
+              )}
             </div>
 
             <div className="mt-20 text-center border-t border-dashed border-border pt-8">

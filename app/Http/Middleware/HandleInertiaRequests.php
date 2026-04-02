@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Support\DashboardNavigation;
+use App\Support\SocialAuth;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -36,6 +37,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'socialAuth' => fn () => SocialAuth::share(),
             'navigation' => [
                 'dashboard' => fn () => DashboardNavigation::forUser($request->user()),
             ],

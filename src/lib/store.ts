@@ -101,6 +101,7 @@ export interface Order {
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'paid' | 'refunded' | 'failed';
+  paymentMethod: 'cod' | 'online';
   createdAt: string;
 }
 
@@ -222,10 +223,10 @@ export function seedData() {
   ];
 
   const orders: Order[] = [
-    { id: 'o1', customerId: 'c1', items: [{ productId: 'p1', productName: 'iPhone 15 Pro', quantity: 1, price: 949 }], subtotal: 949, tax: 85.41, total: 1034.41, status: 'delivered', paymentStatus: 'paid', createdAt: '2024-03-01' },
-    { id: 'o2', customerId: 'c2', items: [{ productId: 'p3', productName: 'MacBook Pro 16"', quantity: 1, price: 2399 }, { productId: 'p5', productName: 'Sony WH-1000XM5', quantity: 1, price: 299 }], subtotal: 2698, tax: 242.82, total: 2940.82, status: 'shipped', paymentStatus: 'paid', createdAt: '2024-03-05' },
-    { id: 'o3', customerId: 'c4', items: [{ productId: 'p4', productName: 'Air Jordan 1', quantity: 2, price: 180 }], subtotal: 360, tax: 32.40, total: 392.40, status: 'processing', paymentStatus: 'paid', createdAt: '2024-03-10' },
-    { id: 'o4', customerId: 'c3', items: [{ productId: 'p2', productName: 'Galaxy S24 Ultra', quantity: 1, price: 1199 }], subtotal: 1199, tax: 107.91, total: 1306.91, status: 'pending', paymentStatus: 'pending', createdAt: '2024-03-12' },
+    { id: 'o1', customerId: 'c1', items: [{ productId: 'p1', productName: 'iPhone 15 Pro', quantity: 1, price: 949 }], subtotal: 949, tax: 85.41, total: 1034.41, status: 'delivered', paymentStatus: 'paid', paymentMethod: 'online', createdAt: '2024-03-01' },
+    { id: 'o2', customerId: 'c2', items: [{ productId: 'p3', productName: 'MacBook Pro 16"', quantity: 1, price: 2399 }, { productId: 'p5', productName: 'Sony WH-1000XM5', quantity: 1, price: 299 }], subtotal: 2698, tax: 242.82, total: 2940.82, status: 'shipped', paymentStatus: 'paid', paymentMethod: 'online', createdAt: '2024-03-05' },
+    { id: 'o3', customerId: 'c4', items: [{ productId: 'p4', productName: 'Air Jordan 1', quantity: 2, price: 180 }], subtotal: 360, tax: 32.40, total: 392.40, status: 'processing', paymentStatus: 'paid', paymentMethod: 'cod', createdAt: '2024-03-10' },
+    { id: 'o4', customerId: 'c3', items: [{ productId: 'p2', productName: 'Galaxy S24 Ultra', quantity: 1, price: 1199 }], subtotal: 1199, tax: 107.91, total: 1306.91, status: 'pending', paymentStatus: 'pending', paymentMethod: 'cod', createdAt: '2024-03-12' },
   ];
 
   const coupons: Coupon[] = [

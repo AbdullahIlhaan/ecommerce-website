@@ -9,8 +9,14 @@ import {
   FileText
 } from "lucide-react";
 import { Link } from "@inertiajs/react";
+import { formatPaymentMethod } from "@/lib/payments";
 
-export default function CheckoutSuccess({ orderId }: { orderId?: string }) {
+type CheckoutSuccessOrder = {
+  paymentMethod: string;
+  paymentStatus: string;
+};
+
+export default function CheckoutSuccess({ orderId, order }: { orderId?: string; order?: CheckoutSuccessOrder | null }) {
   const displayOrderNumber = orderId ? `#${orderId.slice(0, 8).toUpperCase()}` : "FBD-" + Math.floor(100000 + Math.random() * 900000);
 
   return (
@@ -28,14 +34,14 @@ export default function CheckoutSuccess({ orderId }: { orderId?: string }) {
           <p className="text-lg text-muted-foreground max-w-lg mx-auto">Thank you for your purchase. Your order has been placed successfully and is now being processed.</p>
         </div>
 
-        <div className="grid w-full max-w-2xl gap-6 px-4 md:grid-cols-2">
+        <div className="grid w-full max-w-3xl gap-6 px-4 md:grid-cols-3">
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <Package className="h-5 w-5" />
              </div>
              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Order ID</h3>
              <p className="mt-1 text-2xl font-black text-foreground">{displayOrderNumber}</p>
-             <p className="mt-4 text-sm text-muted-foreground">We've sent a confirmation email with order details and tracking information.</p>
+             <p className="mt-4 text-sm text-muted-foreground">Keep this order number handy and use the invoice download below whenever you need a copy.</p>
           </div>
 
           <div className="rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
@@ -44,7 +50,18 @@ export default function CheckoutSuccess({ orderId }: { orderId?: string }) {
              </div>
              <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Next Steps</h3>
              <p className="mt-1 text-xl font-black text-foreground">Prepare for Delivery</p>
-             <p className="mt-4 text-sm text-muted-foreground">Our team is preparing your package. You will receive a tracking link once shipped.</p>
+             <p className="mt-4 text-sm text-muted-foreground">Our team is preparing your package while payment remains pending until it is confirmed.</p>
+          </div>
+
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+             <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <FileText className="h-5 w-5" />
+             </div>
+             <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Payment</h3>
+             <p className="mt-1 text-xl font-black text-foreground">{formatPaymentMethod(order?.paymentMethod)}</p>
+             <p className="mt-4 text-sm text-muted-foreground">
+               Current status: <span className="font-semibold capitalize text-foreground">{order?.paymentStatus ?? "pending"}</span>.
+             </p>
           </div>
         </div>
 

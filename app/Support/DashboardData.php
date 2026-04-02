@@ -150,6 +150,7 @@ class DashboardData
             'total' => (float) $order->total,
             'status' => $order->status,
             'paymentStatus' => $order->payment_status,
+            'paymentMethod' => $order->payment_method ?: 'cod',
             'createdAt' => $order->created_at?->toDateString(),
             'formattedDate' => $order->created_at?->format('F d, Y'),
         ];

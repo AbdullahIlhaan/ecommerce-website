@@ -20,6 +20,7 @@ class Order extends Model
         'total',
         'status',
         'payment_status',
+        'payment_method',
         'delivery_zone',
         'delivery_charge',
         'delivery_city',

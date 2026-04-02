@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Search, Eye, ShoppingCart, FileText, Printer } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { formatPaymentMethod } from "@/lib/payments";
 
 export default function OrdersPage() {
   const { orders, customers } = usePage<{ orders: Order[]; customers: Customer[] }>().props;
@@ -32,7 +33,10 @@ export default function OrdersPage() {
   }), [orders, search, statusFilter, getCustomerName]);
 
   const handleExportPDF = () => {
-    const content = orders.map(o => `Order #${o.id.slice(0,6).toUpperCase()} | ${getCustomerName(o.customerId)} | $${o.total.toFixed(2)} | ${o.status}`).join('\n');
+    const content = orders.map(
+      (o) =>
+        `Order #${o.id.slice(0, 6).toUpperCase()} | ${getCustomerName(o.customerId)} | BDT ${o.total.toFixed(2)} | ${o.status} | ${formatPaymentMethod(o.paymentMethod)} | ${o.paymentStatus}`,
+    ).join('\n');
     const blob = new Blob([`ORDERS REPORT\n${'='.repeat(60)}\n\n${content}`], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'orders-report.txt'; a.click();
@@ -96,6 +100,7 @@ export default function OrdersPage() {
                         <StatusBadge status={o.status} />
                         <StatusBadge status={o.paymentStatus} />
                       </div>
+                      <div className="text-xs font-medium text-muted-foreground">{formatPaymentMethod(o.paymentMethod)}</div>
                     </div>
                     <div className="flex flex-col gap-2">
                       <Button variant="ghost" size="icon" onClick={() => setViewOrder(o)}><Eye className="h-4 w-4" /></Button>
@@ -123,7 +128,12 @@ export default function OrdersPage() {
                       <TableCell>{o.items.length}</TableCell>
                       <TableCell className="font-semibold">BDT {o.total.toFixed(2)}</TableCell>
                       <TableCell><StatusBadge status={o.status} /></TableCell>
-                      <TableCell><StatusBadge status={o.paymentStatus} /></TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <StatusBadge status={o.paymentStatus} />
+                          <div className="text-xs text-muted-foreground">{formatPaymentMethod(o.paymentMethod)}</div>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button variant="ghost" size="icon" title="View Details" onClick={() => setViewOrder(o)}><Eye className="h-4 w-4" /></Button>
@@ -153,6 +163,7 @@ export default function OrdersPage() {
                 <div><span className="text-muted-foreground">Date:</span> <span className="font-medium">{viewOrder.createdAt}</span></div>
                 <div><span className="text-muted-foreground">Status:</span> <StatusBadge status={viewOrder.status} /></div>
                 <div><span className="text-muted-foreground">Payment:</span> <StatusBadge status={viewOrder.paymentStatus} /></div>
+                <div><span className="text-muted-foreground">Method:</span> <span className="font-medium">{formatPaymentMethod(viewOrder.paymentMethod)}</span></div>
               </div>
               <div className="border rounded-lg overflow-hidden">
                 <Table>

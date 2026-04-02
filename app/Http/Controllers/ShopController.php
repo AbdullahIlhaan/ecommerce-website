@@ -25,6 +25,11 @@ class ShopController extends Controller
         'outside_dhaka' => 170,
     ];
 
+    protected const PAYMENT_METHODS = [
+        'cod',
+        'online',
+    ];
+
     public function index(Request $request): Response
     {
         $query = Product::query()->where('status', 'active')->latest();
@@ -170,25 +175,20 @@ class ShopController extends Controller
             'address' => 'required|string',
             'city' => 'required|string|max:255',
             'deliveryZone' => ['required', Rule::in(array_keys(self::DELIVERY_CHARGES))],
-            'deliveryLocationLabel' => 'required|string|max:1000',
-            'deliveryLatitude' => 'required|numeric|between:-90,90',
-            'deliveryLongitude' => 'required|numeric|between:-180,180',
-            'paymentMethod' => 'required|string',
+            'deliveryLocationLabel' => 'nullable|string|max:1000',
+            'deliveryLatitude' => 'nullable|numeric|between:-90,90',
+            'deliveryLongitude' => 'nullable|numeric|between:-180,180',
+            'paymentMethod' => ['required', Rule::in(self::PAYMENT_METHODS)],
             'items' => 'required|array|min:1',
-            'items.*.id' => 'required|string',
-            'items.*.name' => 'required|string',
+            'items.*.id' => ['required', 'string'],
             'items.*.quantity' => 'required|integer|min:1',
-            'items.*.price' => 'required|numeric',
             'subtotal' => 'required|numeric',
             'deliveryCharge' => 'required|numeric',
             'total' => 'required|numeric',
         ]);
 
         $expectedDeliveryCharge = self::DELIVERY_CHARGES[$data['deliveryZone']];
-        $expectedSubtotal = collect($data['items'])->sum(
-            fn (array $item) => (float) $item['price'] * (int) $item['quantity']
-        );
-        $expectedTotal = $expectedSubtotal + $expectedDeliveryCharge;
+        $deliveryLocation = $this->normalizeDeliveryLocation($data);
 
         if (round((float) $data['deliveryCharge'], 2) !== round((float) $expectedDeliveryCharge, 2)) {
             throw ValidationException::withMessages([
@@ -196,20 +196,26 @@ class ShopController extends Controller
             ]);
         }
 
-        if (round((float) $data['subtotal'], 2) !== round((float) $expectedSubtotal, 2)) {
-            throw ValidationException::withMessages([
-                'items' => 'The submitted subtotal does not match the cart items.',
-            ]);
-        }
+        $orderId = DB::transaction(function () use ($data, $expectedDeliveryCharge, $deliveryLocation) {
+            $resolvedItems = $this->resolveCheckoutItems($data['items']);
+            $expectedSubtotal = collect($resolvedItems)->sum(
+                fn (array $item) => (float) $item['price'] * (int) $item['quantity']
+            );
+            $expectedTotal = $expectedSubtotal + $expectedDeliveryCharge;
 
-        if (round((float) $data['total'], 2) !== round((float) $expectedTotal, 2)) {
-            throw ValidationException::withMessages([
-                'total' => 'The total amount is invalid. Please confirm your delivery location.',
-            ]);
-        }
+            if (round((float) $data['subtotal'], 2) !== round((float) $expectedSubtotal, 2)) {
+                throw ValidationException::withMessages([
+                    'items' => 'The submitted subtotal does not match the latest product prices.',
+                ]);
+            }
 
-        $orderId = DB::transaction(function () use ($data) {
-            $customer = Customer::firstOrCreate(
+            if (round((float) $data['total'], 2) !== round((float) $expectedTotal, 2)) {
+                throw ValidationException::withMessages([
+                    'total' => 'The total amount is invalid. Please refresh your cart totals and try again.',
+                ]);
+            }
+
+            $customer = Customer::query()->updateOrCreate(
                 ['email' => $data['email']],
                 [
                     'name' => $data['name'],
@@ -220,25 +226,28 @@ class ShopController extends Controller
 
             $order = Order::create([
                 'customer_id' => $customer->id,
-                'subtotal' => $data['subtotal'],
+                'subtotal' => $expectedSubtotal,
                 'tax' => 0,
-                'total' => $data['total'],
+                'total' => $expectedTotal,
                 'status' => 'pending',
                 'payment_status' => 'pending',
+                'payment_method' => $data['paymentMethod'],
                 'delivery_zone' => $data['deliveryZone'],
-                'delivery_charge' => $data['deliveryCharge'],
+                'delivery_charge' => $expectedDeliveryCharge,
                 'delivery_city' => $data['city'],
                 'delivery_address' => $data['address'],
-                'delivery_location_label' => $data['deliveryLocationLabel'],
-                'delivery_latitude' => $data['deliveryLatitude'],
-                'delivery_longitude' => $data['deliveryLongitude'],
+                'delivery_location_label' => $deliveryLocation['label'],
+                'delivery_latitude' => $deliveryLocation['latitude'],
+                'delivery_longitude' => $deliveryLocation['longitude'],
             ]);
 
-            foreach ($data['items'] as $item) {
+            foreach ($resolvedItems as $item) {
+                $item['product']->decrement('stock', $item['quantity']);
+
                 OrderItem::create([
                     'order_id' => $order->id,
-                    'product_id' => $item['id'],
-                    'product_name' => $item['name'],
+                    'product_id' => $item['product_id'],
+                    'product_name' => $item['product_name'],
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                 ]);
@@ -252,8 +261,120 @@ class ShopController extends Controller
 
     public function checkoutSuccess(Request $request): Response
     {
+        $orderId = $request->query('orderId');
+        $order = null;
+
+        if (filled($orderId)) {
+            $order = Order::query()
+                ->select(['id', 'payment_method', 'payment_status'])
+                ->find($orderId);
+        }
+
         return Inertia::render('Shop/CheckoutSuccess', [
-            'orderId' => $request->query('orderId'),
+            'orderId' => $orderId,
+            'order' => $order ? [
+                'paymentMethod' => $order->payment_method ?: 'cod',
+                'paymentStatus' => $order->payment_status,
+            ] : null,
         ]);
+    }
+
+    /**
+     * @param  array{deliveryLocationLabel?: string|null, deliveryLatitude?: float|int|string|null, deliveryLongitude?: float|int|string|null}  $data
+     * @return array{label: string|null, latitude: float|null, longitude: float|null}
+     */
+    protected function normalizeDeliveryLocation(array $data): array
+    {
+        $label = isset($data['deliveryLocationLabel']) && is_string($data['deliveryLocationLabel'])
+            ? trim($data['deliveryLocationLabel'])
+            : null;
+        $latitude = $data['deliveryLatitude'] ?? null;
+        $longitude = $data['deliveryLongitude'] ?? null;
+
+        $hasAnyLocationField = filled($label) || $latitude !== null || $longitude !== null;
+
+        if (! $hasAnyLocationField) {
+            return [
+                'label' => null,
+                'latitude' => null,
+                'longitude' => null,
+            ];
+        }
+
+        if (! filled($label) || $latitude === null || $longitude === null) {
+            throw ValidationException::withMessages([
+                'deliveryLocationLabel' => 'Select a map suggestion for a pinned delivery point, or clear the optional map fields and continue with your manual address.',
+            ]);
+        }
+
+        return [
+            'label' => $label,
+            'latitude' => (float) $latitude,
+            'longitude' => (float) $longitude,
+        ];
+    }
+
+    /**
+     * @param  array<int, array{id: string, quantity: int}>  $items
+     * @return array<int, array{product: Product, product_id: string, product_name: string, quantity: int, price: float}>
+     */
+    protected function resolveCheckoutItems(array $items): array
+    {
+        $normalizedItems = collect($items)
+            ->groupBy('id')
+            ->map(fn ($group, string $productId) => [
+                'id' => $productId,
+                'quantity' => $group->sum(fn (array $item) => (int) $item['quantity']),
+            ])
+            ->values();
+
+        $productIds = $normalizedItems
+            ->pluck('id')
+            ->all();
+
+        $products = Product::query()
+            ->whereIn('id', $productIds)
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
+        return $normalizedItems
+            ->map(function (array $item) use ($products): array {
+                /** @var Product|null $product */
+                $product = $products->get($item['id']);
+
+                if ($product === null || $product->status !== 'active') {
+                    throw ValidationException::withMessages([
+                        'items' => 'One or more products are no longer available.',
+                    ]);
+                }
+
+                if ($product->stock < (int) $item['quantity']) {
+                    throw ValidationException::withMessages([
+                        'items' => sprintf('%s is no longer available in the requested quantity.', $product->name),
+                    ]);
+                }
+
+                return [
+                    'product' => $product,
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'quantity' => (int) $item['quantity'],
+                    'price' => $this->resolveCheckoutPrice($product),
+                ];
+            })
+            ->all();
+    }
+
+    protected function resolveCheckoutPrice(Product $product): float
+    {
+        $salePrice = $product->sale_price !== null ? (float) $product->sale_price : null;
+        $basePrice = (float) $product->price;
+
+        if ($salePrice !== null && $salePrice < $basePrice) {
+            return $salePrice;
+        }
+
+        return $basePrice;
     }
 }

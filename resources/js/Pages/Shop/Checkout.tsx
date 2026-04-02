@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, router, usePage } from "@inertiajs/react";
+import { formatPaymentMethod } from "@/lib/payments";
 
 type DeliveryZone = "inside_dhaka" | "outside_dhaka" | "";
 
@@ -111,8 +112,9 @@ export default function Checkout() {
 
   const deliveryCharge = formData.deliveryZone ? DELIVERY_CHARGES[formData.deliveryZone] : 0;
   const total = subtotal + deliveryCharge;
-  const hasLocation = Boolean(formData.deliveryLocationLabel && formData.deliveryLatitude && formData.deliveryLongitude);
-  const canPlaceOrder = items.length > 0 && hasLocation && Boolean(formData.deliveryZone) && !locationLoading;
+  const hasPinnedLocation = Boolean(formData.deliveryLocationLabel && formData.deliveryLatitude && formData.deliveryLongitude);
+  const hasDeliveryZone = Boolean(formData.deliveryZone);
+  const canPlaceOrder = items.length > 0 && hasDeliveryZone;
 
   useEffect(() => {
     const query = locationQuery.trim();
@@ -325,7 +327,7 @@ export default function Checkout() {
               </div>
               <div>
                 <h2 className="text-2xl font-black">Shipping Details</h2>
-                <p className="text-sm text-muted-foreground">Order submission is blocked until a delivery location is selected.</p>
+                <p className="text-sm text-muted-foreground">Map lookup is optional. You can still place the order using your manual address and delivery area.</p>
               </div>
             </div>
 
@@ -372,7 +374,7 @@ export default function Checkout() {
 
               <div className="space-y-2 md:col-span-2">
                 <div className="flex items-center justify-between gap-4">
-                  <Label htmlFor="location-search" className="text-xs font-bold uppercase tracking-widest">Delivery Location</Label>
+                  <Label htmlFor="location-search" className="text-xs font-bold uppercase tracking-widest">Delivery Location (Optional Pin)</Label>
                   <Button type="button" variant="outline" className="h-9 rounded-full px-4 text-xs font-bold" onClick={handleUseCurrentLocation}>
                     {locationLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateFixed className="mr-2 h-4 w-4" />}
                     Use Current Location
@@ -382,8 +384,7 @@ export default function Checkout() {
                 <div className="relative">
                   <Input
                     id="location-search"
-                    required
-                    placeholder="Search a location in Bangladesh"
+                    placeholder="Search a location in Bangladesh if you want to pin the address"
                     className="h-12 rounded-xl border-border bg-muted/20 pr-12"
                     value={locationQuery}
                     onChange={(e) => {
@@ -428,7 +429,21 @@ export default function Checkout() {
                   </div>
                 )}
 
+                {!hasPinnedLocation && (
+                  <div className="rounded-2xl border border-dashed border-border bg-muted/10 px-4 py-3">
+                    <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Manual Delivery Entry</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      If map search does not work, your typed address, city, and selected delivery area will still be used for this order.
+                    </div>
+                  </div>
+                )}
+
                 {locationError && <p className="text-xs font-medium text-destructive">{locationError}</p>}
+                {locationError && (
+                  <p className="text-xs text-muted-foreground">
+                    Map lookup is optional, so you can continue with the manual address fields below.
+                  </p>
+                )}
                 {errors.deliveryLocationLabel && <p className="text-xs font-medium text-destructive">{errors.deliveryLocationLabel}</p>}
                 {errors.deliveryLatitude && <p className="text-xs font-medium text-destructive">{errors.deliveryLatitude}</p>}
                 {errors.deliveryLongitude && <p className="text-xs font-medium text-destructive">{errors.deliveryLongitude}</p>}
@@ -520,7 +535,7 @@ export default function Checkout() {
                 </div>
                 <div className="text-left">
                   <div className="font-bold">Cash on Delivery</div>
-                  <div className="text-xs text-muted-foreground">Pay when you receive</div>
+                  <div className="text-xs text-muted-foreground">Place the order now and collect payment on delivery</div>
                 </div>
               </button>
 
@@ -540,9 +555,16 @@ export default function Checkout() {
                 </div>
                 <div className="text-left">
                   <div className="font-bold">Online Payment</div>
-                  <div className="text-xs text-muted-foreground">bKash, VISA, Mastercard</div>
+                  <div className="text-xs text-muted-foreground">bKash, VISA, Mastercard recorded now and kept pending</div>
                 </div>
               </button>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-muted/20 px-4 py-3 text-sm">
+              <div className="font-bold text-foreground">Selected: {formatPaymentMethod(formData.paymentMethod)}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                The order is placed immediately, while payment status remains pending until it is verified or collected.
+              </div>
             </div>
           </section>
         </div>
@@ -572,13 +594,21 @@ export default function Checkout() {
                 <span className="text-muted-foreground">Delivery Charge</span>
                 <span className="font-bold">BDT {deliveryCharge.toLocaleString()}</span>
               </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Payment Method</span>
+                <span className="font-bold">{formatPaymentMethod(formData.paymentMethod)}</span>
+              </div>
               <div className="rounded-2xl bg-muted/30 px-4 py-3 text-sm">
                 <div className="font-bold text-foreground">
                   {formData.deliveryZone === "inside_dhaka" ? "Inside Dhaka" : formData.deliveryZone === "outside_dhaka" ? "Outside Dhaka" : "Choose a delivery area"}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {hasLocation ? formData.deliveryLocationLabel : "Search a map location or use your device location to unlock checkout."}
+                  {hasPinnedLocation ? formData.deliveryLocationLabel : "Manual address checkout is active. Add a map pin only if you want extra location precision."}
                 </div>
+              </div>
+              <div className="rounded-2xl bg-muted/30 px-4 py-3 text-sm">
+                <div className="font-bold text-foreground">Payment Status</div>
+                <div className="mt-1 text-xs text-muted-foreground">Pending until payment is verified or collected.</div>
               </div>
               <Separator />
               <div className="flex justify-between text-xl font-black">
@@ -593,7 +623,7 @@ export default function Checkout() {
               type="submit"
               className="h-14 w-full rounded-2xl bg-primary text-lg font-bold shadow-lg shadow-primary/20 transition-all hover:bg-brand-hover active:scale-95"
             >
-              {loading ? "Processing..." : canPlaceOrder ? "Place Order" : "Set Delivery Location"}
+              {loading ? "Processing..." : canPlaceOrder ? "Place Order" : "Choose Delivery Area"}
               {!loading && <Lock className="ml-2 h-4 w-4" />}
             </Button>
 

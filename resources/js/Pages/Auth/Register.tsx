@@ -1,12 +1,15 @@
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import SocialLoginButtons from "@/components/shared/SocialLoginButtons";
+import type { SocialAuthState } from "@/lib/social-auth";
 import { Sparkles, ArrowRight, Gift, ShoppingBag, Globe } from "lucide-react";
 
 export default function Register() {
+  const { socialAuth } = usePage<{ socialAuth: SocialAuthState }>().props;
+  const hasSocialAuth = socialAuth.providers.length > 0;
   const form = useForm({
     name: "",
     email: "",
@@ -92,16 +95,20 @@ export default function Register() {
               <CardContent className="space-y-6 pb-10 px-8 lg:px-10">
                 
                 {/* Social register buttons at the top */}
-                <SocialLoginButtons label="Sign up with" />
+                {hasSocialAuth && (
+                  <>
+                    <SocialLoginButtons label="Sign up with" providers={socialAuth.providers} />
 
-                <div className="relative">
-                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-3 text-muted-foreground font-black tracking-widest">OR USE EMAIL</span>
-                  </div>
-                </div>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-border" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-card px-3 text-muted-foreground font-black tracking-widest">OR USE EMAIL</span>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="grid gap-5">
                    <div className="space-y-2">

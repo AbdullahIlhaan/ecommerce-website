@@ -11,9 +11,13 @@
                 min-height: 100vh;
                 display: grid;
                 place-items: center;
-                font-family: Geist, system-ui, sans-serif;
+                font-family: Lato, system-ui, sans-serif;
                 background: linear-gradient(180deg, #f7f8fb 0%, #eef1f6 100%);
                 color: #151923;
+            }
+
+            h1 {
+                font-family: Nunito, system-ui, sans-serif;
             }
 
             .card {

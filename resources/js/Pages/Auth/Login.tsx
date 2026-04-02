@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SocialLoginButtons from "@/components/shared/SocialLoginButtons";
+import type { SocialAuthState } from "@/lib/social-auth";
 import { Sparkles, ArrowRight, ShieldCheck, Zap } from "lucide-react";
 
 interface FlashProps {
@@ -13,7 +14,15 @@ interface FlashProps {
 }
 
 export default function Login() {
-  const { flash } = usePage<{ flash: FlashProps }>().props;
+  const { flash, socialAuth } = usePage<{ flash: FlashProps; socialAuth: SocialAuthState }>().props;
+  const hasSocialAuth = socialAuth.providers.length > 0;
+  const secondaryAccessText = hasSocialAuth
+    ? socialAuth.providers.map((provider) => provider.label).join(" and ")
+    : "Email and phone sign-in ready";
+  const accessHighlights = [
+    { icon: ShieldCheck, text: "Secure Authentication", sub: "AES-256 Encrypted" },
+    { icon: Zap, text: hasSocialAuth ? "Social Sign-In Ready" : "Fast Access", sub: secondaryAccessText },
+  ];
 
   const emailForm = useForm({
     email: "",
@@ -63,10 +72,7 @@ export default function Login() {
               </p>
 
               <div className="grid gap-4 sm:grid-cols-2 pt-4">
-                {[
-                  { icon: ShieldCheck, text: "Secure Authentication", sub: "AES-256 Encrypted" },
-                  { icon: Zap, text: "Instant Access", sub: "Social Login Enabled" }
-                ].map((item, i) => (
+                {accessHighlights.map((item, i) => (
                   <div key={i} className="flex gap-4 p-4 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md transition-all duration-300">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary">
                       <item.icon className="h-5 w-5" />
@@ -217,16 +223,20 @@ export default function Login() {
                   </TabsContent>
                 </Tabs>
 
-                <div className="relative">
-                   <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-3 text-muted-foreground font-black tracking-widest">OR</span>
-                  </div>
-                </div>
+                {hasSocialAuth && (
+                  <>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t border-border" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-card px-3 text-muted-foreground font-black tracking-widest">OR</span>
+                      </div>
+                    </div>
 
-                <SocialLoginButtons label="Continue with" />
+                    <SocialLoginButtons label="Continue with" providers={socialAuth.providers} />
+                  </>
+                )}
 
                 <div className="pt-4 text-center">
                    <p className="text-sm text-muted-foreground font-medium">
