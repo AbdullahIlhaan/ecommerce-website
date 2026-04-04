@@ -10,6 +10,16 @@ import {
   Camera,
   Search,
   ChevronRight,
+  LayoutDashboard,
+  User,
+  ShoppingBag,
+  Settings,
+  LogOut,
+  Facebook,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Github,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -19,6 +29,12 @@ import {
   AccordionItem, 
   AccordionTrigger 
 } from "@/components/ui/accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 import { CartSheet } from "@/components/shared/CartSheet";
 import { useCart } from "@/hooks/use-cart";
@@ -49,14 +65,31 @@ type SearchSuggestion = {
   category: { name: string; slug: string } | null;
 };
 
-function BrandLogo() {
+type FooterSetting = {
+  id: string;
+  logoPath: string | null;
+  logoText: string;
+  description: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  copyright: string | null;
+  paymentMethods: Array<{ name: string; imagePath: string | null }>;
+  socialLinks: Array<{ platform: string; url: string }>;
+};
+
+function BrandLogo({ logoPath, logoText }: { logoPath?: string | null, logoText?: string }) {
   return (
-    <Link href="/" className="inline-flex items-center gap-3">
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f26522] to-[#a12863] text-lg font-black text-white shadow-[0_12px_28px_-16px_rgba(162,40,99,0.6)]">
-        <img src="/images/logofbd.jpeg" alt="FutureBD logo" className="h-full w-full rounded-2xl object-cover" />
+    <Link href="/" className="inline-flex items-center gap-2 sm:gap-3">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#f26522] to-[#a12863] text-base font-black text-white shadow-[0_12px_28px_-16px_rgba(162,40,99,0.6)] sm:h-11 sm:w-11 sm:rounded-2xl sm:text-lg">
+        {logoPath ? (
+          <img src={logoPath} alt={logoText} className="h-full w-full rounded-xl object-cover sm:rounded-2xl" />
+        ) : (
+          <img src="/images/logofbd.jpeg" alt="FutureBD logo" className="h-full w-full rounded-xl object-cover sm:rounded-2xl" />
+        )}
       </div>
       <div>
-        <div className="text-lg font-black tracking-tight text-foreground">FutureBD</div>
+        <div className="text-base font-black tracking-tight text-foreground sm:text-lg">{logoText || "FutureBD"}</div>
       </div>
     </Link>
   );
@@ -71,9 +104,10 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
   const [searchResults, setSearchResults] = useState<SearchSuggestion[]>([]);
   const { itemCount } = useCart();
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
-  const { auth, categories } = usePage<{
+  const { auth, categories, footerSetting } = usePage<{
     auth: { user: AuthUser | null };
     categories?: Category[];
+    footerSetting: FooterSetting;
   }>().props;
 
   const categoryItems = categories ?? [];
@@ -216,15 +250,29 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
       {/* Main Header */}
       <header className="safe-top sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur-xl">
         <div className="page_container px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 py-5 lg:flex-row lg:items-center lg:gap-6">
+          <div className="flex flex-col gap-3 py-3 lg:flex-row lg:items-center lg:gap-6 lg:py-5">
             <div className="flex shrink-0 items-center justify-between">
-              <BrandLogo />
-              <button 
-                className="interactive inline-flex h-11 w-11 items-center justify-center rounded-full text-foreground transition hover:bg-muted lg:hidden"
-                onClick={() => setMobileMenuOpen(true)}
-              >
-                <Menu className="h-5 w-5" />
-              </button>
+              <BrandLogo logoPath={footerSetting.logoPath} logoText={footerSetting.logoText} />
+              <div className="flex items-center gap-1 sm:gap-1.5 lg:hidden">
+                <ThemeToggle />
+                <button 
+                  className="interactive relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted"
+                  onClick={() => setCartOpen(true)}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {itemCount > 0 && (
+                    <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                      {itemCount}
+                    </span>
+                  )}
+                </button>
+                <button 
+                  className="interactive inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground transition hover:bg-muted"
+                  onClick={() => setMobileMenuOpen(true)}
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Search Bar */}
@@ -373,7 +421,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
             </div>
 
             {/* Icons & Account */}
-            <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+            <div className="hidden items-center justify-end gap-1.5 lg:flex lg:gap-2">
               <ThemeToggle />
               <button 
                 className="interactive relative inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:text-primary"
@@ -389,17 +437,84 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
               <button className="interactive inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:text-primary">
                 <Bell className="h-5 w-5" />
               </button>
-              <Link href={accountHref} className="interactive flex items-center gap-3 rounded-full border border-border bg-card px-2 py-1 shadow-sm">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[#9d2a5f] text-sm font-bold text-white">
-                  {auth.user ? auth.user.name.slice(0, 1).toUpperCase() : "A"}
-                </div>
-                <div className="hidden sm:block">
-                  <div className="text-md font-semibold leading-none text-foreground">{accountLabel}</div>
-                  {accountSubLabel && (
-                    <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{accountSubLabel}</div>
-                  )}
-                </div>
-              </Link>
+              {auth.user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="group interactive flex items-center gap-3 rounded-full border border-border bg-card pr-4 pl-1 py-1 shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-md active:scale-[0.98]">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#f26522] to-[#a12863] text-sm font-bold text-white shadow-sm ring-2 ring-background ring-offset-2 ring-offset-primary/10 transition-transform duration-500 group-hover:rotate-12">
+                        {auth.user.name.slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className="hidden sm:block text-left">
+                        <div className="text-sm font-black tracking-tight text-foreground leading-none">{auth.user.name}</div>
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          {auth.user.canAccessAdminPanel ? (
+                             <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-[#a12863] bg-[#a12863]/10 px-1.5 py-0.5 rounded-full">
+                                <LayoutDashboard className="h-2 w-2" />
+                                Dashboard
+                             </span>
+                          ) : (
+                             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{auth.user.role.replace("_", " ")}</span>
+                          ) }
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64 rounded-3xl border border-border bg-card/95 p-3 shadow-[0_28px_60px_-20px_rgba(15,23,42,0.28)] backdrop-blur-xl" align="end" sideOffset={12}>
+                    <div className="mb-2 flex items-center gap-4 px-4 py-3 border-b border-border/60">
+                         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary font-black">
+                            {auth.user.name.slice(0,1).toUpperCase()}
+                         </div>
+                         <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-black text-foreground truncate">{auth.user.name}</span>
+                            <span className="text-xs text-muted-foreground truncate">{auth.user.email}</span>
+                         </div>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      {auth.user.canAccessAdminPanel && (
+                        <DropdownMenuItem asChild className="rounded-xl px-4 py-3 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
+                          <Link href="/dashboard" className="flex items-center gap-3 w-full font-bold text-sm">
+                            <LayoutDashboard className="h-4 w-4" />
+                            Admin Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem asChild className="rounded-xl px-4 py-3 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
+                        <Link href="/account" className="flex items-center gap-3 w-full font-bold text-sm">
+                          <ShoppingBag className="h-4 w-4" />
+                          My Orders
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="rounded-xl px-4 py-3 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
+                        <Link href="/account" className="flex items-center gap-3 w-full font-bold text-sm">
+                          <Settings className="h-4 w-4" />
+                          Account Settings
+                        </Link>
+                      </DropdownMenuItem>
+                    </div>
+
+                    <div className="mt-2 pt-2 border-t border-border/60">
+                       <DropdownMenuItem 
+                        className="rounded-xl px-4 py-3 text-destructive focus:bg-destructive/5 focus:text-destructive transition-colors cursor-pointer"
+                        onClick={() => router.post("/logout")}
+                       >
+                         <div className="flex items-center gap-3 w-full font-bold text-sm">
+                           <LogOut className="h-4 w-4" />
+                           Log Out
+                         </div>
+                       </DropdownMenuItem>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link href="/login" className="group interactive flex items-center gap-3 rounded-full border border-border bg-card pr-5 pl-1 py-1 shadow-sm transition-all duration-300 hover:border-primary/30 hover:shadow-md hover:-translate-y-0.5">
+                   <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                      <User className="h-5 w-5" />
+                   </div>
+                   <span className="text-sm font-black uppercase tracking-widest text-foreground transition-colors group-hover:text-primary">Sign In</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -416,19 +531,23 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
           <div className="overflow-hidden rounded-[8px] border-t-8 border border-border bg-card shadow-sm">
             <div className="grid gap-8 px-6 py-10 md:grid-cols-2 lg:grid-cols-5 lg:px-10">
               <div className="lg:col-span-2">
-                <BrandLogo />
+                <BrandLogo logoPath={footerSetting.logoPath} logoText={footerSetting.logoText} />
                 <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
-                  The platform to get products from global marketplaces to Bangladesh. You can pay product price in Bangladeshi Taka (BDT).
+                  {footerSetting.description}
                 </p>
                 <div className="mt-5 space-y-3 text-sm text-muted-foreground">
-                  <div className="flex items-start gap-3">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#a12863]/10 text-[#a12863]"><MapPin className="h-4 w-4" /></span>
-                    <div>Plot 1020, Mirpur DOHS, Dhaka.</div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#a12863]/10 text-[#a12863]"><Phone className="h-4 w-4" /></span>
-                    <div>+88 09666 78 3333</div>
-                  </div>
+                  {footerSetting.address && (
+                    <div className="flex items-start gap-3">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#a12863]/10 text-[#a12863]"><MapPin className="h-4 w-4" /></span>
+                      <div>{footerSetting.address}</div>
+                    </div>
+                  )}
+                  {footerSetting.phone && (
+                    <div className="flex items-start gap-3">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#a12863]/10 text-[#a12863]"><Phone className="h-4 w-4" /></span>
+                      <div>{footerSetting.phone}</div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div>
@@ -439,24 +558,39 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
               </div>
               <div>
                 <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Support</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link href="#">Help Center</Link></li>
-                  <li><Link href="#">Refund Policy</Link></li>
+                <ul className="space-y-2 text-sm text-muted-foreground font-medium">
+                  <li><Link href="#" className="hover:text-primary transition-colors">Help Center</Link></li>
+                  <li><Link href="/refund-policy" className="hover:text-primary transition-colors">Refund Policy</Link></li>
+                  <li><Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+                  <li><Link href="/terms" className="hover:text-primary transition-colors">Terms & Conditions</Link></li>
                 </ul>
               </div>
               <div>
                 <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Follow Us</h4>
-                <div className="mb-5 flex items-center gap-2">
-                   {/* Social Icons */}
+                <div className="mb-5 flex items-center gap-3">
+                   {footerSetting.socialLinks.map((link, idx) => (
+                     <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                       {link.platform === 'Facebook' && <Facebook className="h-5 w-5" />}
+                       {link.platform === 'Twitter' && <Twitter className="h-5 w-5" />}
+                       {link.platform === 'Instagram' && <Instagram className="h-5 w-5" />}
+                       {link.platform === 'Linkedin' && <Linkedin className="h-5 w-5" />}
+                       {link.platform === 'Github' && <Github className="h-5 w-5" />}
+                     </a>
+                   ))}
                 </div>
                 <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Payment</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {["bKash", "VISA"].map(p => <div key={p} className="rounded-xl border border-border bg-background p-2 text-center text-[10px] font-bold">{p}</div>)}
+                  {footerSetting.paymentMethods.map((p, idx) => (
+                    <div key={idx} className="flex flex-col items-center justify-center rounded-xl border border-border bg-background p-2 text-center text-[10px] font-bold gap-1">
+                      {p.imagePath && <img src={p.imagePath} alt={p.name} className="h-4 w-auto object-contain" />}
+                      <span>{p.name}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
             <div className="border-t border-border bg-muted/20 px-6 py-5 text-center text-sm text-muted-foreground lg:px-10">
-              © 2018-2026 FutureBD. All rights reserved.
+              {footerSetting.copyright}
             </div>
           </div>
         </div>

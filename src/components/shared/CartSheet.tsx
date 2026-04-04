@@ -18,12 +18,12 @@ export function CartSheet({ open, onOpenChange }: { open: boolean, onOpenChange:
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="flex w-full flex-col pr-0 sm:max-w-lg">
-        <SheetHeader className="px-6">
-          <SheetTitle className="flex items-center gap-3 text-2xl font-black">
-            <ShoppingBag className="h-6 w-6 text-primary" />
+        <SheetHeader className="px-4 sm:px-6">
+          <SheetTitle className="flex items-center gap-3 text-xl font-black sm:text-2xl">
+            <ShoppingBag className="h-5 w-5 text-primary sm:h-6 sm:w-6" />
             Your Bag
             {itemCount > 0 && (
-              <span className="ml-auto rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+              <span className="ml-auto rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary sm:text-xs">
                 {itemCount} {itemCount === 1 ? 'item' : 'items'}
               </span>
             )}
@@ -58,10 +58,10 @@ export function CartSheet({ open, onOpenChange }: { open: boolean, onOpenChange:
                     </div>
                     <div className="flex flex-1 flex-col justify-between py-1">
                       <div>
-                        <h4 className="line-clamp-1 text-sm font-bold text-foreground sm:text-base">
+                        <h4 className="line-clamp-1 text-xs font-bold text-foreground sm:text-base">
                           {item.name}
                         </h4>
-                        <p className="mt-1 text-sm font-black text-primary">
+                        <p className="mt-1 text-xs font-black text-primary sm:text-sm">
                           BDT {(item.salePrice ?? item.price).toLocaleString()}
                         </p>
                       </div>
@@ -94,9 +94,9 @@ export function CartSheet({ open, onOpenChange }: { open: boolean, onOpenChange:
               </div>
             </ScrollArea>
 
-            <SheetFooter className="absolute bottom-0 left-0 w-full border-t border-border bg-background/80 p-6 backdrop-blur-lg">
-              <div className="w-full space-y-4">
-                <div className="flex items-center justify-between text-lg font-black">
+            <SheetFooter className="absolute bottom-0 left-0 w-full border-t border-border bg-background/80 p-4 backdrop-blur-lg sm:p-6">
+              <div className="w-full space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-between text-base font-black sm:text-lg">
                   <span>Subtotal</span>
                   <span>BDT {subtotal.toLocaleString()}</span>
                 </div>

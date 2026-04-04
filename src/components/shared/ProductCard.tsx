@@ -67,25 +67,25 @@ export function ProductCard({ product }: { product: ProductProps }) {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col p-4">
-        <Link href={`/products/${product.id}`} className="mb-2 block">
-          <h3 className="line-clamp-2 text-sm font-semibold leading-tight text-foreground transition-colors hover:text-primary sm:text-base">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
+        <Link href={`/products/${product.id}`} className="mb-1 block">
+          <h3 className="line-clamp-2 text-xs font-semibold leading-tight text-foreground transition-colors hover:text-primary sm:text-base">
             {product.name}
           </h3>
         </Link>
         
-        <div className="mt-auto flex items-baseline gap-2">
+        <div className="mt-auto flex flex-wrap items-baseline gap-1 sm:gap-2">
           {hasDiscount ? (
             <>
-              <span className="text-lg font-bold text-primary">
+              <span className="text-sm font-bold text-primary sm:text-lg">
                 BDT {product.salePrice?.toLocaleString()}
               </span>
-              <span className="text-sm text-muted-foreground line-through opacity-60">
+              <span className="text-[10px] text-muted-foreground line-through opacity-60 sm:text-sm">
                 BDT {product.price.toLocaleString()}
               </span>
             </>
           ) : (
-            <span className="text-lg font-bold text-foreground">
+            <span className="text-sm font-bold text-foreground sm:text-lg">
               BDT {product.price.toLocaleString()}
             </span>
           )}

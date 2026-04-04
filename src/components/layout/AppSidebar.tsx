@@ -1,6 +1,7 @@
 import {
   LayoutDashboard, Package, FolderTree, Award, Users,
-  ShoppingCart, Ticket, Star, ChevronLeft, Shield, User, Circle
+  ShoppingCart, Ticket, Star, ChevronLeft, Shield, User, Circle, Settings,
+  Images
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -23,6 +24,8 @@ const iconMap = {
   Star,
   Shield,
   User,
+  Settings,
+  Images,
 } as const;
 
 export function AppSidebar() {

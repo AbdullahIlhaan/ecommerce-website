@@ -10,6 +10,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FooterSettingController;
 use App\Http\Controllers\HeroBannerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
@@ -74,6 +75,10 @@ Route::get('/checkout', [ShopController::class, 'checkout'])->name('shop.checkou
 Route::post('/checkout', [ShopController::class, 'storeOrder'])->name('shop.checkout.store');
 Route::get('/checkout/success', [ShopController::class, 'checkoutSuccess'])->name('shop.checkout.success');
 Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
+
+Route::get('/terms', fn () => Inertia::render('Legal/Terms'))->name('legal.terms');
+Route::get('/refund-policy', fn () => Inertia::render('Legal/Refund'))->name('legal.refund');
+Route::get('/privacy-policy', fn () => Inertia::render('Legal/Privacy'))->name('legal.privacy');
 
 Route::view('/offline', 'offline')->name('offline');
 
@@ -165,6 +170,9 @@ Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
     Route::post('/coupons', [CouponController::class, 'store'])->name('coupons.store');
     Route::put('/coupons/{coupon}', [CouponController::class, 'update'])->name('coupons.update');
     Route::delete('/coupons/{coupon}', [CouponController::class, 'destroy'])->name('coupons.destroy');
+
+    Route::get('/footer-settings', [FooterSettingController::class, 'index'])->name('footer-settings.index');
+    Route::post('/footer-settings', [FooterSettingController::class, 'update'])->name('footer-settings.update');
 });
 
 Route::middleware(['auth', 'role:super_admin'])->group(function () {

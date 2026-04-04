@@ -29,11 +29,15 @@ final class HtmlRenderer
      */
     public function parse(string $html): Components\Element
     {
-        $dom = new DOMDocument;
+        if (! class_exists('DOMDocument')) {
+            return Termwind::span(strip_tags($html));
+        }
 
         if (strip_tags($html) === $html) {
             return Termwind::span($html);
         }
+
+        $dom = new DOMDocument;
 
         $html = '<?xml encoding="UTF-8"><!DOCTYPE html><html><body>'.trim($html).'</body></html>';
         $dom->loadHTML($html, LIBXML_NOERROR | LIBXML_COMPACT | LIBXML_HTML_NODEFDTD | LIBXML_NOBLANKS | LIBXML_NOXMLDECL);

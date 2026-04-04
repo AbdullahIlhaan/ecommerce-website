@@ -24,3 +24,9 @@ yarn-error.log
 .idea
 .vscode
 futurebd.zip
+*.zip
+*.rar
+*.tar.gz
+*.tar
+*.tgz
+*.7z

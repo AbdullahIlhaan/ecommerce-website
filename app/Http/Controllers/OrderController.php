@@ -33,6 +33,8 @@ class OrderController extends Controller
             'payment_status' => $data['paymentStatus'],
         ]);
 
+        $order->customer->notify(new \App\Notifications\OrderUpdated($order));
+
         return to_route('orders.index')->with('success', 'Order updated.');
     }
 

@@ -274,26 +274,26 @@ export default function Home() {
                       <button
                         type="button"
                         aria-label="Previous slide"
-                        className="interactive absolute left-4 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-foreground backdrop-blur"
+                        className="interactive absolute left-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-foreground backdrop-blur sm:left-4 sm:h-11 sm:w-11"
                         onClick={() => setActiveSlide((current) => (current === 0 ? slides.length - 1 : current - 1))}
                       >
-                        <ChevronLeft className="h-5 w-5" />
+                        <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                       <button
                         type="button"
                         aria-label="Next slide"
-                        className="interactive absolute right-4 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-foreground backdrop-blur"
+                        className="interactive absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-foreground backdrop-blur sm:right-4 sm:h-11 sm:w-11"
                         onClick={() => setActiveSlide((current) => (current + 1) % slides.length)}
                       >
-                        <ChevronRight className="h-5 w-5" />
+                        <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
-                      <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/20 px-3 py-2 backdrop-blur">
+                      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-black/20 px-2 py-1.5 backdrop-blur sm:bottom-4 sm:gap-2 sm:px-3 sm:py-2">
                         {slides.map((slide, index) => (
                           <button
                             key={slide.id}
                             type="button"
                             aria-label={`Go to slide ${index + 1}`}
-                            className={`h-2.5 rounded-full transition-all ${index === activeSlide ? "w-8 bg-white" : "w-2.5 bg-white/55"}`}
+                            className={`h-1.5 rounded-full transition-all sm:h-2.5 ${index === activeSlide ? "w-6 bg-white sm:w-8" : "w-1.5 bg-white/55 sm:w-2.5"}`}
                             onClick={() => setActiveSlide(index)}
                           />
                         ))}
@@ -317,11 +317,11 @@ export default function Home() {
       </section>
 
       {/* Why Choose Us */}
-      <section className="mt-16">
+      <section className="mt-16 hidden md:block">
         <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
           {highlights.map((item, idx) => (
-            <article key={idx} className="flex flex-col items-center text-center space-y-4 group rounded-[8px] bg-[#f8f9fa] dark:bg-card/30 p-8 border border-border/50 transition-transform duration-500 hover:scale-105">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl shadow-primary/5 dark:bg-background transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
+            <article key={idx} className="flex flex-col items-center text-center space-y-4 group rounded-[8px] bg-card p-8 border border-border/50 transition-all hover:border-primary/20 hover:shadow-lg">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
                 <item.icon className="h-7 w-7 text-primary" />
               </div>
               <div>
@@ -335,12 +335,12 @@ export default function Home() {
 
       {/* Brands Showcase */}
       {brands && brands.length > 0 && (
-        <section className="mt-16 space-y-8">
+        <section className="mt-12 sm:mt-20 space-y-6 sm:space-y-8">
            <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-black tracking-tight sm:text-3xl">Top Brands</h2>
-            <Link href="/shop" className="text-sm font-bold text-primary hover:underline">See All</Link>
+            <h2 className="text-xl sm:text-3xl font-black tracking-tight">Top Brands</h2>
+            <Link href="/shop" className="text-xs sm:text-sm font-bold text-primary hover:underline">See All</Link>
           </div>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center sm:gap-4">
             {brands.map((brand) => (
               <Link 
                 key={brand.id} 
@@ -356,24 +356,24 @@ export default function Home() {
 
       {/* Flash Sale Section */}
       {flashSaleProducts && flashSaleProducts.length > 0 && (
-        <section className="mt-16 overflow-hidden rounded-[40px] bg-gradient-to-br from-[#a12863] to-[#f26522] p-8 sm:p-12 text-white">
-          <div className="mb-10 flex flex-col items-center justify-between gap-6 md:flex-row">
+        <section className="mt-12 sm:mt-20 overflow-hidden rounded-[24px] sm:rounded-[40px] bg-gradient-to-br from-[#a12863] to-[#f26522] p-6 sm:p-12 text-white">
+          <div className="mb-8 sm:mb-10 flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="space-y-2 text-center md:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-xs font-black uppercase tracking-widest backdrop-blur-md">
-                <Flame className="h-4 w-4 animate-bounce" />
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 sm:px-4 sm:py-1.5 text-[10px] sm:text-xs font-black uppercase tracking-widest backdrop-blur-md">
+                <Flame className="h-3.5 w-3.5 animate-bounce sm:h-4 sm:w-4" />
                 Flash Sale
               </div>
-              <h2 className="text-3xl font-black tracking-tight lg:text-5xl">Limited Time Deals</h2>
-              <p className="text-white/80">Grab your favorites before they're gone!</p>
+              <h2 className="text-2xl font-black tracking-tight sm:text-3xl lg:text-5xl">Limited Time Deals</h2>
+              <p className="text-sm opacity-80 sm:text-base sm:opacity-100 text-white/80">Grab your favorites before they're gone!</p>
             </div>
             
-            <div className="flex gap-4">
+            <div className="flex gap-2 sm:gap-4">
               {[ { l: 'H', v: '02' }, { l: 'M', v: '45' }, { l: 'S', v: '18' } ].map((t, idx) => (
                 <div key={idx} className="flex flex-col items-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-2xl font-black backdrop-blur-xl border border-white/20">
+                  <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-white/10 text-lg sm:text-2xl font-black backdrop-blur-xl border border-white/20">
                     {t.v}
                   </div>
-                  <span className="mt-2 text-[10px] font-bold uppercase tracking-widest text-white/60">{t.l}</span>
+                  <span className="mt-1 sm:mt-2 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-white/60">{t.l}</span>
                 </div>
               ))}
             </div>
@@ -394,15 +394,15 @@ export default function Home() {
 
       {/* Trending Products */}
       {trendingProducts && trendingProducts.length > 0 && (
-        <section className="mt-20 space-y-8">
+        <section className="mt-16 sm:mt-24 space-y-6 sm:space-y-8">
            <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <h2 className="text-2xl font-black tracking-tight sm:text-4xl">Trending Now</h2>
-              <p className="text-muted-foreground">The most popular picks from our community</p>
+              <h2 className="text-xl sm:text-4xl font-black tracking-tight">Trending Now</h2>
+              <p className="text-xs sm:text-base text-muted-foreground">The most popular picks from our community</p>
             </div>
-            <Link href="/shop" className="group flex items-center gap-2 text-sm font-bold text-primary">
+            <Link href="/shop" className="group flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary">
               Discover More
-              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1 sm:h-4 sm:w-4" />
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -414,13 +414,13 @@ export default function Home() {
       )}
 
       {/* Latest Products Section */}
-      <section className="mt-12 space-y-6">
+      <section className="mt-12 sm:mt-20 space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">New Arrivals</h2>
-            <p className="text-sm text-muted-foreground sm:text-base">Explore our latest products from global brands</p>
+            <h2 className="text-xl sm:text-3xl font-black tracking-tight text-foreground">New Arrivals</h2>
+            <p className="text-xs sm:text-base text-muted-foreground">Explore our latest products from global brands</p>
           </div>
-          <Link href="/shop" className="interactive font-semibold text-primary transition-colors hover:text-brand-hover">
+          <Link href="/shop" className="interactive text-xs sm:text-base font-bold text-primary">
             View All
           </Link>
         </div>
@@ -439,15 +439,21 @@ export default function Home() {
       </section>
 
       {/* WhatsApp Floating Button */}
-      <div className="safe-bottom fixed bottom-20 right-4 md:bottom-6 md:right-6 lg:z-50">
+      <div className="safe-bottom fixed bottom-20 right-4 z-[60] md:bottom-6 md:right-6">
         <a
           href="https://wa.me/8801335989463"
           target="_blank"
           rel="noopener noreferrer"
-          className="interactive inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-xl shadow-green-500/25 transition hover:-translate-y-1 hover:bg-green-600"
+          className="interactive flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_12px_40px_-12px_rgba(37,211,102,0.6)] transition-all hover:-translate-y-1 hover:bg-[#20bd5a] hover:shadow-[0_16px_48px_-12px_rgba(37,211,102,0.7)] active:scale-95"
           aria-label="Chat on WhatsApp"
         >
-          <span className="text-xl font-black">W</span>
+          <svg
+            viewBox="0 0 24 24"
+            className="h-8 w-8 fill-current"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+          </svg>
         </a>
       </div>
     </StorefrontLayout>

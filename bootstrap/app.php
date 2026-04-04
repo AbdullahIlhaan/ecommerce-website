@@ -1,5 +1,12 @@
 <?php
 
+if (! function_exists('mb_split')) {
+    function mb_split($pattern, $string, $limit = -1) {
+        return preg_split('/' . $pattern . '/u', $string, $limit);
+    }
+}
+
+
 use App\Http\Middleware\AddPwaHeaders;
 use App\Http\Middleware\EnsureUserHasRole;
 use App\Http\Middleware\HandleInertiaRequests;

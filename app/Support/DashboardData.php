@@ -169,4 +169,33 @@ class DashboardData
             'createdAt' => $review->created_at?->toDateString(),
         ])->all();
     }
+
+    public static function footerSetting(?\App\Models\FooterSetting $footerSetting): array
+    {
+        if (! $footerSetting) {
+            $footerSetting = new \App\Models\FooterSetting([
+                'logo_text' => 'FutureBD',
+                'description' => 'The platform to get products from global marketplaces to Bangladesh.',
+                'copyright' => '© 2018-2026 FutureBD. All rights reserved.',
+                'payment_methods' => [],
+                'social_links' => [],
+            ]);
+        }
+
+        return [
+            'id' => $footerSetting->id,
+            'logoPath' => $footerSetting->logo_path,
+            'logoText' => $footerSetting->logo_text,
+            'description' => $footerSetting->description,
+            'address' => $footerSetting->address,
+            'phone' => $footerSetting->phone,
+            'email' => $footerSetting->email,
+            'copyright' => $footerSetting->copyright,
+            'paymentMethods' => collect($footerSetting->payment_methods ?? [])->map(fn($m) => [
+                'name' => $m['name'] ?? '',
+                'imagePath' => $m['image_path'] ?? null,
+            ])->all(),
+            'socialLinks' => $footerSetting->social_links ?? [],
+        ];
+    }
 }

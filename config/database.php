@@ -1,16 +1,17 @@
 <?php
 
 use Illuminate\Support\Str;
-use Pdo\Mysql;
-
 $mysqlOptions = [];
-$mysqlSslCaOption = Mysql::ATTR_SSL_CA;
 
-if (PHP_VERSION_ID < 80500 && defined('PDO::MYSQL_ATTR_SSL_CA')) {
+if (class_exists('Pdo\Mysql') && defined('Pdo\Mysql::ATTR_SSL_CA')) {
+    $mysqlSslCaOption = \Pdo\Mysql::ATTR_SSL_CA;
+} elseif (defined('PDO::MYSQL_ATTR_SSL_CA')) {
     $mysqlSslCaOption = constant('PDO::MYSQL_ATTR_SSL_CA');
+} else {
+    $mysqlSslCaOption = null;
 }
 
-if (extension_loaded('pdo_mysql') && env('MYSQL_ATTR_SSL_CA')) {
+if ($mysqlSslCaOption && extension_loaded('pdo_mysql') && env('MYSQL_ATTR_SSL_CA')) {
     $mysqlOptions[$mysqlSslCaOption] = env('MYSQL_ATTR_SSL_CA');
 }
 

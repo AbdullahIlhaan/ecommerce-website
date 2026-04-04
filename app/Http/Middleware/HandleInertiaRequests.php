@@ -39,8 +39,9 @@ class HandleInertiaRequests extends Middleware
             ],
             'socialAuth' => fn () => SocialAuth::share(),
             'navigation' => [
-                'dashboard' => fn () => DashboardNavigation::forUser($request->user()),
+                'dashboard' => fn () => \App\Support\DashboardNavigation::forUser($request->user()),
             ],
+            'footerSetting' => \App\Support\DashboardData::footerSetting(\App\Models\FooterSetting::first()),
         ];
     }
 }

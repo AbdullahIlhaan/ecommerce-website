@@ -77,6 +77,12 @@ class DashboardNavigation
                     self::item('Account', 'account', 'User', [UserRole::SuperAdmin, UserRole::Admin, UserRole::Moderator, UserRole::Customer], exact: true),
                 ],
             ],
+            [
+                'label' => 'Settings',
+                'items' => [
+                    self::item('Footer Settings', 'footer-settings.index', 'Settings', [UserRole::SuperAdmin, UserRole::Admin]),
+                ],
+            ],
         ]);
     }
 

@@ -172,7 +172,7 @@ class ShopController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:20',
-            'address' => 'required|string',
+            'address' => 'nullable|string',
             'city' => 'required|string|max:255',
             'deliveryZone' => ['required', Rule::in(array_keys(self::DELIVERY_CHARGES))],
             'deliveryLocationLabel' => 'nullable|string|max:1000',
@@ -215,13 +215,19 @@ class ShopController extends Controller
                 ]);
             }
 
+            $customerData = [
+                'name' => $data['name'],
+                'phone' => $data['phone'],
+                'status' => 'active',
+            ];
+
+            if ($request->user()) {
+                $customerData['user_id'] = $request->user()->id;
+            }
+
             $customer = Customer::query()->updateOrCreate(
                 ['email' => $data['email']],
-                [
-                    'name' => $data['name'],
-                    'phone' => $data['phone'],
-                    'status' => 'active',
-                ]
+                $customerData
             );
 
             $order = Order::create([
@@ -252,6 +258,8 @@ class ShopController extends Controller
                     'price' => $item['price'],
                 ]);
             }
+
+            $customer->notify(new \App\Notifications\OrderPlaced($order));
 
             return $order->id;
         });
