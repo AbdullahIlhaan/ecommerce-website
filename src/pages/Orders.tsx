@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Search, Eye, ShoppingCart, FileText, Printer } from "lucide-react";
+import { Search, Eye, ShoppingCart, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatPaymentMethod } from "@/lib/payments";
 
@@ -25,17 +25,26 @@ export default function OrdersPage() {
   const [newPaymentStatus, setNewPaymentStatus] = useState("");
 
   const getCustomerName = useCallback((id: string) => customers.find(c => c.id === id)?.name || "Unknown", [customers]);
+  const getInvoiceNumber = useCallback(
+    (order: Order) => order.invoiceNumber || `INV-${order.id.slice(0, 8).toUpperCase()}`,
+    [],
+  );
+  const getOrderReference = useCallback((order: Order) => `#${order.id.slice(0, 8).toUpperCase()}`, []);
 
   const filtered = useMemo(() => orders.filter(o => {
-    const matchSearch = o.id.includes(search) || getCustomerName(o.customerId).toLowerCase().includes(search.toLowerCase());
+    const searchTerm = search.toLowerCase();
+    const matchSearch =
+      o.id.toLowerCase().includes(searchTerm) ||
+      getInvoiceNumber(o).toLowerCase().includes(searchTerm) ||
+      getCustomerName(o.customerId).toLowerCase().includes(searchTerm);
     const matchStatus = statusFilter === "all" || o.status === statusFilter;
     return matchSearch && matchStatus;
-  }), [orders, search, statusFilter, getCustomerName]);
+  }), [orders, search, statusFilter, getCustomerName, getInvoiceNumber]);
 
   const handleExportPDF = () => {
     const content = orders.map(
       (o) =>
-        `Order #${o.id.slice(0, 6).toUpperCase()} | ${getCustomerName(o.customerId)} | BDT ${o.total.toFixed(2)} | ${o.status} | ${formatPaymentMethod(o.paymentMethod)} | ${o.paymentStatus}`,
+        `${getInvoiceNumber(o)} | ${getOrderReference(o)} | ${getCustomerName(o.customerId)} | BDT ${o.total.toFixed(2)} | ${o.status} | ${formatPaymentMethod(o.paymentMethod)} | ${o.paymentStatus}`,
     ).join('\n');
     const blob = new Blob([`ORDERS REPORT\n${'='.repeat(60)}\n\n${content}`], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -69,7 +78,7 @@ export default function OrdersPage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search orders..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Search by order ref, invoice ID, or customer..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
@@ -93,7 +102,8 @@ export default function OrdersPage() {
                 <article key={o.id} className="rounded-2xl border border-border bg-background p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-2">
-                      <div className="font-mono text-sm font-medium">#{o.id.slice(0, 6).toUpperCase()}</div>
+                      <div className="font-mono text-sm font-medium">{getInvoiceNumber(o)}</div>
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{getOrderReference(o)}</div>
                       <div className="text-sm text-muted-foreground">{getCustomerName(o.customerId)} • {o.items.length} items</div>
                       <div className="font-semibold">BDT {o.total.toFixed(2)}</div>
                       <div className="flex flex-wrap gap-2">
@@ -123,7 +133,10 @@ export default function OrdersPage() {
                 <TableBody>
                   {filtered.map(o => (
                     <TableRow key={o.id}>
-                      <TableCell className="font-mono text-xs font-medium">#{o.id.slice(0,6).toUpperCase()}</TableCell>
+                      <TableCell>
+                        <div className="font-mono text-xs font-medium">{getInvoiceNumber(o)}</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{getOrderReference(o)}</div>
+                      </TableCell>
                       <TableCell>{getCustomerName(o.customerId)}</TableCell>
                       <TableCell>{o.items.length}</TableCell>
                       <TableCell className="font-semibold">BDT {o.total.toFixed(2)}</TableCell>
@@ -155,11 +168,14 @@ export default function OrdersPage() {
       {/* View Order */}
       <Dialog open={!!viewOrder} onOpenChange={() => setViewOrder(null)}>
         <DialogContent className="sm:max-w-2xl">
-          <DialogHeader><DialogTitle>Order #{viewOrder?.id.slice(0,6).toUpperCase()}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{viewOrder ? `${getInvoiceNumber(viewOrder)} (${getOrderReference(viewOrder)})` : "Order"}</DialogTitle>
+          </DialogHeader>
           {viewOrder && (
             <div className="space-y-4">
               <div className="grid gap-4 text-sm sm:grid-cols-2">
                 <div><span className="text-muted-foreground">Customer:</span> <span className="font-medium">{getCustomerName(viewOrder.customerId)}</span></div>
+                <div><span className="text-muted-foreground">Order Ref:</span> <span className="font-medium">{getOrderReference(viewOrder)}</span></div>
                 <div><span className="text-muted-foreground">Date:</span> <span className="font-medium">{viewOrder.createdAt}</span></div>
                 <div><span className="text-muted-foreground">Status:</span> <StatusBadge status={viewOrder.status} /></div>
                 <div><span className="text-muted-foreground">Payment:</span> <StatusBadge status={viewOrder.paymentStatus} /></div>

@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { toast } from '@/hooks/use-toast';
+import { resolveEffectivePrice } from '@/lib/pricing';
 
 export type CartItem = {
   id: string;
@@ -17,6 +18,7 @@ interface CartContextType {
   updateQuantity: (id: string, quantity: number) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
+  syncCart: (products: Array<Omit<CartItem, 'quantity'>>) => void;
   subtotal: number;
   itemCount: number;
   isLoaded: boolean;
@@ -81,8 +83,52 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([]);
   };
 
+  const syncCart = useCallback((products: Array<Omit<CartItem, 'quantity'>>) => {
+    setItems((prev) => {
+      const productsById = new Map(products.map((product) => [product.id, product]));
+      let changed = false;
+
+      const nextItems = prev.flatMap((item) => {
+        const latest = productsById.get(item.id);
+
+        if (!latest || latest.stock <= 0) {
+          changed = true;
+          return [];
+        }
+
+        const quantity = Math.min(item.quantity, latest.stock);
+        const nextItem: CartItem = {
+          ...latest,
+          quantity,
+        };
+
+        if (
+          item.name !== nextItem.name
+          || item.price !== nextItem.price
+          || item.salePrice !== nextItem.salePrice
+          || item.image !== nextItem.image
+          || item.stock !== nextItem.stock
+          || item.quantity !== nextItem.quantity
+        ) {
+          changed = true;
+        }
+
+        return [nextItem];
+      });
+
+      if (changed) {
+        toast({
+          title: "Cart updated",
+          description: "We refreshed your cart with the latest product prices and stock.",
+        });
+      }
+
+      return changed ? nextItems : prev;
+    });
+  }, []);
+
   const subtotal = items.reduce(
-    (acc, item) => acc + (item.salePrice ?? item.price) * item.quantity,
+    (acc, item) => acc + resolveEffectivePrice(item.price, item.salePrice) * item.quantity,
     0
   );
 
@@ -95,6 +141,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       updateQuantity,
       removeFromCart,
       clearCart,
+      syncCart,
       subtotal,
       itemCount,
       isLoaded

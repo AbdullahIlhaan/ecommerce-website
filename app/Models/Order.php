@@ -14,6 +14,7 @@ class Order extends Model
     use HasStringPrimaryKey;
 
     protected $fillable = [
+        'invoice_number',
         'customer_id',
         'subtotal',
         'tax',
@@ -39,6 +40,17 @@ class Order extends Model
         'delivery_longitude' => 'decimal:7',
     ];
 
+    protected static function booted(): void
+    {
+        static::created(function (self $order): void {
+            if (blank($order->invoice_number)) {
+                $order->forceFill([
+                    'invoice_number' => $order->buildInvoiceNumber(),
+                ])->saveQuietly();
+            }
+        });
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
@@ -47,5 +59,14 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function buildInvoiceNumber(): string
+    {
+        return sprintf(
+            'INV-%s-%s',
+            $this->created_at?->format('Ymd') ?? now()->format('Ymd'),
+            strtoupper(substr($this->id, 0, 8)),
+        );
     }
 }

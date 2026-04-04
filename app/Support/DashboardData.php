@@ -126,6 +126,7 @@ class DashboardData
     {
         return [
             'id' => $order->id,
+            'invoiceNumber' => $order->invoice_number ?: $order->buildInvoiceNumber(),
             'customerId' => $order->customer_id,
             'customer' => $order->customer ? [
                 'name' => $order->customer->name,
@@ -172,6 +173,17 @@ class DashboardData
 
     public static function footerSetting(?\App\Models\FooterSetting $footerSetting): array
     {
+        $defaults = [
+            'logo_text' => 'FutureBD',
+            'description' => 'The platform to get products from global marketplaces to Bangladesh. You can pay product price in Bangladeshi Taka (BDT).',
+            'address' => 'Plot 1020, Mirpur DOHS, Dhaka.',
+            'phone' => '+88 09666 78 3333',
+            'email' => 'support@futurebd.com',
+            'copyright' => '© 2018-2026 FutureBD. All rights reserved.',
+            'payment_methods' => [],
+            'social_links' => [],
+        ];
+
         if (! $footerSetting) {
             $footerSetting = new \App\Models\FooterSetting([
                 'logo_text' => 'FutureBD',
@@ -185,17 +197,17 @@ class DashboardData
         return [
             'id' => $footerSetting->id,
             'logoPath' => $footerSetting->logo_path,
-            'logoText' => $footerSetting->logo_text,
-            'description' => $footerSetting->description,
-            'address' => $footerSetting->address,
-            'phone' => $footerSetting->phone,
-            'email' => $footerSetting->email,
-            'copyright' => $footerSetting->copyright,
-            'paymentMethods' => collect($footerSetting->payment_methods ?? [])->map(fn($m) => [
+            'logoText' => $footerSetting->logo_text ?: $defaults['logo_text'],
+            'description' => $footerSetting->description ?: $defaults['description'],
+            'address' => $footerSetting->address ?: $defaults['address'],
+            'phone' => $footerSetting->phone ?: $defaults['phone'],
+            'email' => $footerSetting->email ?: $defaults['email'],
+            'copyright' => $footerSetting->copyright ?: $defaults['copyright'],
+            'paymentMethods' => collect($footerSetting->payment_methods ?: $defaults['payment_methods'])->map(fn($m) => [
                 'name' => $m['name'] ?? '',
                 'imagePath' => $m['image_path'] ?? null,
             ])->all(),
-            'socialLinks' => $footerSetting->social_links ?? [],
+            'socialLinks' => $footerSetting->social_links ?: $defaults['social_links'],
         ];
     }
 }

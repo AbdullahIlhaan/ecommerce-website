@@ -27,6 +27,7 @@ import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 import { ProductCard, type ProductProps } from "@/components/shared/ProductCard";
 import { StorefrontLayout } from "@/components/layout/StorefrontLayout";
 import { Button } from "@/components/ui/button";
+import { useLocalization } from "@/hooks/use-localization";
 
 type HomeCategory = {
   id: string;
@@ -50,29 +51,6 @@ type HomeHeroBanner = {
   createdAt?: string | null;
 };
 
-const highlights = [
-  {
-    title: "Easy to use test test test",
-    description: "Surf, select, and purchase. It's that easy to do cross border shopping now.",
-    icon: ShoppingBag,
-  },
-  {
-    title: "Fastest Delivery",
-    description: "Doorstep delivery of cross border trade products in 25 days.",
-    icon: Truck,
-  },
-  {
-    title: "Best Support",
-    description: "Feel free to contact us via call, live chat, and Facebook.",
-    icon: LifeBuoy,
-  },
-  {
-    title: "Trusted Refund Policy",
-    description: "Shop without hesitation as you are covered by refund policy.",
-    icon: RefreshCcw,
-  },
-];
-
 function BrandLogo() {
   return (
     <Link href="/" className="inline-flex items-center gap-3">
@@ -91,6 +69,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const { t } = useLocalization();
 
   const { auth, categories, heroBanners, latestProducts, flashSaleProducts, trendingProducts, brands } = usePage<{
     auth: { user: AuthUser | null };
@@ -99,7 +78,7 @@ export default function Home() {
     latestProducts?: ProductProps[];
     flashSaleProducts?: ProductProps[];
     trendingProducts?: ProductProps[];
-    brands?: { id: string; name: string }[];
+    brands?: { id: string; name: string; slug: string }[];
   }>().props;
   const categoryItems = categories ?? [];
   const rootCategories = categoryItems.filter((category) => category.parentId === null);
@@ -147,6 +126,34 @@ export default function Home() {
       : "/account"
     : "/login";
   const primaryCtaLabel = auth.user ? (auth.user.canAccessAdminPanel ? "Open Dashboard" : "My Account") : "Sign In";
+  const highlights = useMemo(() => [
+    {
+      title: t("home.highlight_easy_title", "Easy to use test test test"),
+      description: t("home.highlight_easy_description", "Surf, select, and purchase. It's that easy to do cross border shopping now."),
+      icon: ShoppingBag,
+    },
+    {
+      title: t("home.highlight_delivery_title", "Fastest Delivery"),
+      description: t("home.highlight_delivery_description", "Doorstep delivery of cross border trade products in 25 days."),
+      icon: Truck,
+    },
+    {
+      title: t("home.highlight_support_title", "Best Support"),
+      description: t("home.highlight_support_description", "Feel free to contact us via call, live chat, and Facebook."),
+      icon: LifeBuoy,
+    },
+    {
+      title: t("home.highlight_refund_title", "Trusted Refund Policy"),
+      description: t("home.highlight_refund_description", "Shop without hesitation as you are covered by refund policy."),
+      icon: RefreshCcw,
+    },
+  ], [t]);
+
+  const translateCategoryName = (category: { name: string; slug: string }) =>
+    t(`content.category.${category.slug}.name`, category.name);
+
+  const translateBrandName = (brand: { name: string; slug: string }) =>
+    t(`content.brand.${brand.slug}.name`, brand.name);
 
   useEffect(() => {
     if (slides.length <= 1) return undefined;
@@ -170,14 +177,14 @@ export default function Home() {
       <section className="space-y-5">
         <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
           <aside className="relative hidden xl:block">
-            <div className="h-full overflow-hidden rounded-[8px] border border-border bg-card shadow-[0_22px_60px_-36px_rgba(15,23,42,0.25)]">
+              <div className="h-full overflow-hidden rounded-[8px] border border-border bg-card shadow-[0_22px_60px_-36px_rgba(15,23,42,0.25)]">
               <div className="flex items-center justify-between bg-primary px-5 py-3 text-white">
                 <div className="flex items-center gap-3">
                   <Menu className="h-5 w-5" />
-                  <span className="text-lg font-black tracking-tight">Categories</span>
+                  <span className="text-lg font-black tracking-tight">{t("common.categories", "Categories")}</span>
                 </div>
                 <Link href="/categories/all" className="interactive rounded-[8px] px-3 py-1 text-xs font-bold bg-white/10 transition hover:bg-white/20">
-                  View All
+                  {t("common.view_all", "View All")}
                 </Link>
               </div>
 
@@ -197,7 +204,7 @@ export default function Home() {
                           : "text-foreground hover:bg-muted/50"
                         }`}
                       >
-                        <span>{category.name}</span>
+                        <span>{translateCategoryName(category)}</span>
                         <ChevronRight className={`h-4 w-4 transition-transform ${hoveredCategory === category.id ? "translate-x-1" : ""}`} />
                       </Link>
 
@@ -205,10 +212,10 @@ export default function Home() {
                       {hoveredCategory === category.id && category.children && category.children.length > 0 && (
                         <div className="absolute left-[318px] top-0 z-50 min-h-full w-[400px] animate-in fade-in slide-in-from-left-2 duration-200">
                           <div className="ml-2 rounded-2xl border border-border bg-card p-6 shadow-2xl ring-1 ring-black/5">
-                            <div className="mb-4 flex items-center justify-between">
-                              <h4 className="text-lg font-black tracking-tight text-foreground">{category.name}</h4>
+                              <div className="mb-4 flex items-center justify-between">
+                              <h4 className="text-lg font-black tracking-tight text-foreground">{translateCategoryName(category)}</h4>
                               <Link href={`/shop?category=${category.id}`} className="text-xs font-bold text-primary hover:underline">
-                                Explore All
+                                {t("storefront.explore_all", "Explore All")}
                               </Link>
                             </div>
                             <div className="grid grid-cols-2 gap-x-6 gap-y-2">
@@ -222,7 +229,7 @@ export default function Home() {
                                     <ChevronRight className="h-4 w-4" />
                                   </div>
                                   <span className="text-sm font-bold text-muted-foreground group-hover/item:text-primary transition-colors">
-                                    {child.name}
+                                    {translateCategoryName(child)}
                                   </span>
                                 </Link>
                               ))}
@@ -230,15 +237,15 @@ export default function Home() {
                             
                             {/* Promo area in mega menu */}
                             <div className="mt-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent p-4">
-                               <p className="text-xs font-black uppercase tracking-widest text-primary">Limited Offer</p>
-                               <p className="mt-1 text-sm font-medium">Up to 40% off on {category.name}</p>
+                               <p className="text-xs font-black uppercase tracking-widest text-primary">{t("common.limited_offer", "Limited Offer")}</p>
+                               <p className="mt-1 text-sm font-medium">{t("home.up_to_off", "Up to 40% off on :category", { category: translateCategoryName(category) })}</p>
                             </div>
                           </div>
                         </div>
                       )}
                     </div>
                   )) : (
-                    <div className="px-5 py-4 text-[15px] text-muted-foreground">No categories available.</div>
+                    <div className="px-5 py-4 text-[15px] text-muted-foreground">{t("common.no_categories", "No categories available.")}</div>
                   )}
                 </div>
               </div>
@@ -337,8 +344,8 @@ export default function Home() {
       {brands && brands.length > 0 && (
         <section className="mt-12 sm:mt-20 space-y-6 sm:space-y-8">
            <div className="flex items-center justify-between">
-            <h2 className="text-xl sm:text-3xl font-black tracking-tight">Top Brands</h2>
-            <Link href="/shop" className="text-xs sm:text-sm font-bold text-primary hover:underline">See All</Link>
+            <h2 className="text-xl sm:text-3xl font-black tracking-tight">{t("home.top_brands", "Top Brands")}</h2>
+            <Link href="/shop" className="text-xs sm:text-sm font-bold text-primary hover:underline">{t("home.see_all", "See All")}</Link>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center sm:gap-4">
             {brands.map((brand) => (
@@ -347,7 +354,7 @@ export default function Home() {
                 href={`/shop?brand=${brand.id}`}
                 className="flex items-center justify-center rounded-2xl border border-border bg-card px-8 py-4 font-black tracking-tight shadow-sm transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary active:scale-95"
               >
-                {brand.name}
+                {translateBrandName(brand)}
               </Link>
             ))}
           </div>
@@ -358,22 +365,22 @@ export default function Home() {
       {flashSaleProducts && flashSaleProducts.length > 0 && (
         <section className="mt-12 sm:mt-20 overflow-hidden rounded-[24px] sm:rounded-[40px] bg-gradient-to-br from-[#a12863] to-[#f26522] p-6 sm:p-12 text-white">
           <div className="mb-8 sm:mb-10 flex flex-col items-center justify-between gap-6 md:flex-row">
-            <div className="space-y-2 text-center md:text-left">
+              <div className="space-y-2 text-center md:text-left">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 sm:px-4 sm:py-1.5 text-[10px] sm:text-xs font-black uppercase tracking-widest backdrop-blur-md">
                 <Flame className="h-3.5 w-3.5 animate-bounce sm:h-4 sm:w-4" />
-                Flash Sale
+                {t("home.flash_sale_badge", "Flash Sale")}
               </div>
-              <h2 className="text-2xl font-black tracking-tight sm:text-3xl lg:text-5xl">Limited Time Deals</h2>
-              <p className="text-sm opacity-80 sm:text-base sm:opacity-100 text-white/80">Grab your favorites before they're gone!</p>
+              <h2 className="text-2xl font-black tracking-tight sm:text-3xl lg:text-5xl">{t("home.limited_time_deals", "Limited Time Deals")}</h2>
+              <p className="text-sm opacity-80 sm:text-base sm:opacity-100 text-white/80">{t("home.flash_sale_description", "Grab your favorites before they're gone!")}</p>
             </div>
             
             <div className="flex gap-2 sm:gap-4">
-              {[ { l: 'H', v: '02' }, { l: 'M', v: '45' }, { l: 'S', v: '18' } ].map((t, idx) => (
+              {[ { l: t("home.countdown_hours", "H"), v: '02' }, { l: t("home.countdown_minutes", "M"), v: '45' }, { l: t("home.countdown_seconds", "S"), v: '18' } ].map((item, idx) => (
                 <div key={idx} className="flex flex-col items-center">
                   <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-white/10 text-lg sm:text-2xl font-black backdrop-blur-xl border border-white/20">
-                    {t.v}
+                    {item.v}
                   </div>
-                  <span className="mt-1 sm:mt-2 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-white/60">{t.l}</span>
+                  <span className="mt-1 sm:mt-2 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-white/60">{item.l}</span>
                 </div>
               ))}
             </div>
@@ -397,11 +404,11 @@ export default function Home() {
         <section className="mt-16 sm:mt-24 space-y-6 sm:space-y-8">
            <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <h2 className="text-xl sm:text-4xl font-black tracking-tight">Trending Now</h2>
-              <p className="text-xs sm:text-base text-muted-foreground">The most popular picks from our community</p>
+              <h2 className="text-xl sm:text-4xl font-black tracking-tight">{t("home.trending_now", "Trending Now")}</h2>
+              <p className="text-xs sm:text-base text-muted-foreground">{t("home.trending_description", "The most popular picks from our community")}</p>
             </div>
             <Link href="/shop" className="group flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary">
-              Discover More
+              {t("home.discover_more", "Discover More")}
               <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1 sm:h-4 sm:w-4" />
             </Link>
           </div>
@@ -417,11 +424,11 @@ export default function Home() {
       <section className="mt-12 sm:mt-20 space-y-6">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h2 className="text-xl sm:text-3xl font-black tracking-tight text-foreground">New Arrivals</h2>
-            <p className="text-xs sm:text-base text-muted-foreground">Explore our latest products from global brands</p>
+            <h2 className="text-xl sm:text-3xl font-black tracking-tight text-foreground">{t("home.new_arrivals", "New Arrivals")}</h2>
+            <p className="text-xs sm:text-base text-muted-foreground">{t("home.new_arrivals_description", "Explore our latest products from global brands")}</p>
           </div>
           <Link href="/shop" className="interactive text-xs sm:text-base font-bold text-primary">
-            View All
+            {t("common.view_all", "View All")}
           </Link>
         </div>
 
@@ -433,7 +440,7 @@ export default function Home() {
         
         {(latestProducts ?? []).length === 0 && (
           <div className="flex min-h-[120px] items-center justify-center rounded-[8px] border-2 border-dashed border-border bg-muted/20 text-muted-foreground">
-            No products found.
+            {t("home.no_products", "No products found.")}
           </div>
         )}
       </section>
@@ -445,7 +452,7 @@ export default function Home() {
           target="_blank"
           rel="noopener noreferrer"
           className="interactive flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_12px_40px_-12px_rgba(37,211,102,0.6)] transition-all hover:-translate-y-1 hover:bg-[#20bd5a] hover:shadow-[0_16px_48px_-12px_rgba(37,211,102,0.7)] active:scale-95"
-          aria-label="Chat on WhatsApp"
+          aria-label={t("home.chat_whatsapp", "Chat on WhatsApp")}
         >
           <svg
             viewBox="0 0 24 24"

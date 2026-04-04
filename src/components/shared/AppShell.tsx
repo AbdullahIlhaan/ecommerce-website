@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { useEffect } from "react";
 
 import { InstallPrompt } from "@/components/shared/InstallPrompt";
+import { WishlistProvider } from "@/context/wishlist-context";
 
 type AppShellProps = {
   App: ComponentType<object>;
@@ -19,9 +20,11 @@ export function AppShell({ App, props }: AppShellProps) {
 
   return (
     <CartProvider>
-      <App {...props} />
-      <InstallPrompt />
-      <Toaster />
+      <WishlistProvider>
+        <App {...props} />
+        <InstallPrompt />
+        <Toaster />
+      </WishlistProvider>
     </CartProvider>
   );
 }

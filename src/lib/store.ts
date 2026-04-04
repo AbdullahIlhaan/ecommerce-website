@@ -94,6 +94,7 @@ export interface Customer {
 
 export interface Order {
   id: string;
+  invoiceNumber?: string;
   customerId: string;
   items: OrderItem[];
   subtotal: number;
@@ -103,6 +104,7 @@ export interface Order {
   paymentStatus: 'pending' | 'paid' | 'refunded' | 'failed';
   paymentMethod: 'cod' | 'online';
   createdAt: string;
+  formattedDate?: string;
 }
 
 export interface OrderItem {

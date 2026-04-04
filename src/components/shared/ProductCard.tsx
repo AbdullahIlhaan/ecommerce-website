@@ -2,6 +2,10 @@ import { Link } from "@inertiajs/react";
 import { ShoppingCart, Eye, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { cn } from "@/lib/utils";
+import { useLocalization } from "@/hooks/use-localization";
+import { hasActiveSalePrice, resolveEffectivePrice } from "@/lib/pricing";
 
 export type ProductProps = {
   id: string;
@@ -14,10 +18,14 @@ export type ProductProps = {
 
 export function ProductCard({ product }: { product: ProductProps }) {
   const { addToCart } = useCart();
-  const hasDiscount = product.salePrice && product.salePrice < product.price;
+  const { toggleWishlist, isInWishlist, removeFromWishlist } = useWishlist();
+  const { t } = useLocalization();
+  const hasDiscount = hasActiveSalePrice(product.price, product.salePrice);
+  const displayPrice = resolveEffectivePrice(product.price, product.salePrice);
   const discountPercentage = hasDiscount
     ? Math.round(((product.price - (product.salePrice ?? 0)) / product.price) * 100)
     : 0;
+  const inWishlist = isInWishlist(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -29,6 +37,22 @@ export function ProductCard({ product }: { product: ProductProps }) {
       salePrice: product.salePrice,
       image: product.images[0] || "/images/placeholder-product.png",
       stock: product.stock
+    });
+    if (inWishlist) {
+      removeFromWishlist(product.id, { silent: true });
+    }
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      salePrice: product.salePrice,
+      image: product.images[0] || "/images/placeholder-product.png",
+      stock: product.stock,
     });
   };
 
@@ -47,6 +71,19 @@ export function ProductCard({ product }: { product: ProductProps }) {
           </div>
         )}
 
+        <Button
+          size="icon"
+          variant="secondary"
+          className={cn(
+            "absolute right-3 top-3 z-10 h-9 w-9 rounded-full shadow-lg transition-transform hover:scale-110 active:scale-95",
+            inWishlist && "bg-primary text-primary-foreground hover:bg-primary/90",
+          )}
+          onClick={handleToggleWishlist}
+          aria-label={inWishlist ? t("wishlist.remove", "Remove from wishlist") : t("wishlist.add", "Add to wishlist")}
+        >
+          <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
+        </Button>
+
         {/* Action Overlay */}
         <div className="absolute inset-x-0 bottom-0 flex translate-y-full items-center justify-center gap-2 bg-gradient-to-t from-black/60 to-transparent p-4 transition-transform duration-300 group-hover:translate-y-0">
           <Button 
@@ -61,9 +98,6 @@ export function ProductCard({ product }: { product: ProductProps }) {
           <Link href={`/products/${product.id}`} className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-foreground shadow-lg transition-transform hover:scale-110 active:scale-95">
             <Eye className="h-4 w-4" />
           </Link>
-          <Button size="icon" variant="secondary" className="h-9 w-9 rounded-full shadow-lg transition-transform hover:scale-110 active:scale-95">
-            <Heart className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 
@@ -78,7 +112,7 @@ export function ProductCard({ product }: { product: ProductProps }) {
           {hasDiscount ? (
             <>
               <span className="text-sm font-bold text-primary sm:text-lg">
-                BDT {product.salePrice?.toLocaleString()}
+                BDT {displayPrice.toLocaleString()}
               </span>
               <span className="text-[10px] text-muted-foreground line-through opacity-60 sm:text-sm">
                 BDT {product.price.toLocaleString()}
@@ -86,14 +120,14 @@ export function ProductCard({ product }: { product: ProductProps }) {
             </>
           ) : (
             <span className="text-sm font-bold text-foreground sm:text-lg">
-              BDT {product.price.toLocaleString()}
+              BDT {displayPrice.toLocaleString()}
             </span>
           )}
         </div>
 
         {product.stock <= 0 && (
           <p className="mt-2 text-[11px] font-bold uppercase tracking-wider text-destructive">
-            Out of Stock
+            {t("search.out_of_stock", "Out of stock")}
           </p>
         )}
       </div>

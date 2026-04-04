@@ -11,6 +11,7 @@ import { ShoppingBag, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { Link } from "@inertiajs/react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { resolveEffectivePrice } from "@/lib/pricing";
 
 export function CartSheet({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const { items, removeFromCart, updateQuantity, subtotal, itemCount } = useCart();
@@ -62,7 +63,7 @@ export function CartSheet({ open, onOpenChange }: { open: boolean, onOpenChange:
                           {item.name}
                         </h4>
                         <p className="mt-1 text-xs font-black text-primary sm:text-sm">
-                          BDT {(item.salePrice ?? item.price).toLocaleString()}
+                          BDT {resolveEffectivePrice(item.price, item.salePrice).toLocaleString()}
                         </p>
                       </div>
                       <div className="flex items-center justify-between">

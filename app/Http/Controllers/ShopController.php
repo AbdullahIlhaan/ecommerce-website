@@ -166,6 +166,32 @@ class ShopController extends Controller
         return Inertia::render('Shop/Checkout');
     }
 
+    public function cartItems(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'string'],
+        ]);
+
+        $items = Product::query()
+            ->whereIn('id', collect($validated['ids'])->unique()->values())
+            ->where('status', 'active')
+            ->get()
+            ->map(fn (Product $product) => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'price' => (float) $product->price,
+                'salePrice' => $product->sale_price !== null ? (float) $product->sale_price : null,
+                'image' => $product->images[0] ?? '/images/placeholder-product.png',
+                'stock' => $product->stock,
+            ])
+            ->values();
+
+        return response()->json([
+            'items' => $items,
+        ]);
+    }
+
     public function storeOrder(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -196,7 +222,7 @@ class ShopController extends Controller
             ]);
         }
 
-        $orderId = DB::transaction(function () use ($data, $expectedDeliveryCharge, $deliveryLocation) {
+        $orderId = DB::transaction(function () use ($data, $expectedDeliveryCharge, $deliveryLocation, $request) {
             $resolvedItems = $this->resolveCheckoutItems($data['items']);
             $expectedSubtotal = collect($resolvedItems)->sum(
                 fn (array $item) => (float) $item['price'] * (int) $item['quantity']

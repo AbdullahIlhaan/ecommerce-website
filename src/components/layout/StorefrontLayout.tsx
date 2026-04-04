@@ -1,9 +1,9 @@
 import { Link, Head, usePage, router } from "@inertiajs/react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  Heart,
   Bell,
   ShoppingCart,
+  Heart,
   MapPin,
   Phone,
   Menu,
@@ -37,7 +37,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 import { CartSheet } from "@/components/shared/CartSheet";
+import { LanguageToggle } from "@/components/shared/LanguageToggle";
 import { useCart } from "@/hooks/use-cart";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { useLocalization } from "@/hooks/use-localization";
+import { WishlistSheet } from "@/components/shared/WishlistSheet";
+import { hasActiveSalePrice, resolveEffectivePrice } from "@/lib/pricing";
 import type { AuthUser } from "@/lib/store";
 
 type Category = {
@@ -98,12 +103,15 @@ function BrandLogo({ logoPath, logoText }: { logoPath?: string | null, logoText?
 export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [wishlistOpen, setWishlistOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchSuggestion[]>([]);
   const { itemCount } = useCart();
+  const { itemCount: wishlistItemCount } = useWishlist();
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
+  const { t } = useLocalization();
   const { auth, categories, footerSetting } = usePage<{
     auth: { user: AuthUser | null };
     categories?: Category[];
@@ -128,6 +136,12 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
       : "/account"
     : "/login";
   const primaryCtaLabel = auth.user ? (auth.user.canAccessAdminPanel ? "Open Dashboard" : "My Account") : "Sign In";
+
+  const translateCategoryName = (category: { name: string; slug: string }) =>
+    t(`content.category.${category.slug}.name`, category.name);
+
+  const translateBrandName = (brand: { name: string; slug: string }) =>
+    t(`content.brand.${brand.slug}.name`, brand.name);
 
   // Nested categories helper
   const nestedCategories = useMemo(() => {
@@ -223,26 +237,31 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
 
       {/* Header Top */}
       <header className="hidden border-b border-border/60 bg-muted/30 md:block">
-        <div className="page_container flex h-9 items-center justify-between gap-4 px-4 text-[13px] text-muted-foreground sm:px-6 lg:px-8">
+        <div className="page_container flex min-h-11 items-center justify-between gap-4 px-4 py-1.5 text-[13px] text-muted-foreground sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-5">
             {title !== "Home" && (
               <Link href="/" className="shrink-0 font-semibold transition hover:text-foreground">
-                Home
+                {t("common.home", "Home")}
               </Link>
             )}
-            <a href="#" className="shrink-0 transition hover:text-foreground">Support Center</a>
+            <a href="#" className="shrink-0 transition hover:text-foreground">{t("common.support_center", "Support Center")}</a>
           </div>
 
-          <div className="flex shrink-0 items-center gap-4">
-            <a href="#" className="hidden items-center gap-1.5 transition hover:text-foreground sm:inline-flex">
-              <Heart className="h-3.5 w-3.5" />
-              <span>Wish List</span>
-            </a>
-            <div className="h-4 w-px bg-border" />
-            <div className="surface-card flex items-center gap-2 rounded-md px-2.5 py-1 text-muted-foreground">
-              <img src="https://flagcdn.com/w20/bd.png" alt="BD" className="h-3 w-[18px] rounded-[2px] object-cover" />
-              <span>English (US) / BDT</span>
-            </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setWishlistOpen(true)}
+              className="interactive inline-flex items-center gap-2 rounded-full px-3 py-2 font-semibold transition hover:bg-card hover:text-foreground"
+            >
+              <Heart className={`h-4 w-4 ${wishlistItemCount > 0 ? "fill-current text-primary" : ""}`} />
+              <span>{t("common.wishlist", "Wish List")}</span>
+              {wishlistItemCount > 0 && (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-bold text-primary-foreground">
+                  {wishlistItemCount}
+                </span>
+              )}
+            </button>
+            <LanguageToggle className="py-1" />
           </div>
         </div>
       </header>
@@ -255,6 +274,17 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
               <BrandLogo logoPath={footerSetting.logoPath} logoText={footerSetting.logoText} />
               <div className="flex items-center gap-1 sm:gap-1.5 lg:hidden">
                 <ThemeToggle />
+                <button
+                  className="interactive relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-primary"
+                  onClick={() => setWishlistOpen(true)}
+                >
+                  <Heart className={`h-5 w-5 ${wishlistItemCount > 0 ? "fill-current text-primary" : ""}`} />
+                  {wishlistItemCount > 0 && (
+                    <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                      {wishlistItemCount}
+                    </span>
+                  )}
+                </button>
                 <button 
                   className="interactive relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted"
                   onClick={() => setCartOpen(true)}
@@ -282,15 +312,15 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                   <div className="flex min-w-0 flex-1 items-center overflow-hidden rounded-full border border-border bg-white shadow-sm ring-2 ring-primary/5 focus-within:ring-primary/20 sm:rounded-[5px] sm:border-2 sm:border-primary sm:bg-card sm:ring-0">
                   <div className="hidden border-r border-border bg-accent/40 pl-4 pr-2 sm:flex">
                     <select className="h-12 min-w-[8.5rem] border-0 bg-transparent px-0 text-[15px] font-medium text-foreground focus:outline-none">
-                      <option>All Countries</option>
-                      <option>China</option>
-                      <option>Bangladesh</option>
+                      <option>{t("storefront.all_countries", "All Countries")}</option>
+                      <option>{t("storefront.country_china", "China")}</option>
+                      <option>{t("storefront.country_bangladesh", "Bangladesh")}</option>
                     </select>
                   </div>
                   <div className="flex min-w-0 flex-1 items-center px-4">
                     <input
                       type="search"
-                      placeholder="Search for products, brands and more..."
+                      placeholder={t("search.placeholder", "Search for products, brands and more...")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onFocus={() => {
@@ -310,7 +340,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                     </button>
                   </div>
                   <button type="submit" className="interactive hidden h-12 bg-primary px-7 text-[15px] font-semibold text-primary-foreground sm:block transition-colors hover:bg-primary/90">
-                    Search
+                    {t("common.search", "Search")}
                   </button>
                 </div>
                   {isSearchOpen && (
@@ -318,16 +348,18 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                       <div className="border-b border-border/70 bg-gradient-to-r from-primary/10 via-background to-background px-5 py-4">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <p className="text-xs font-black uppercase tracking-[0.24em] text-primary/70">Smart Search</p>
+                            <p className="text-xs font-black uppercase tracking-[0.24em] text-primary/70">{t("search.smart_title", "Smart Search")}</p>
                             <p className="mt-1 text-sm text-muted-foreground">
-                              {isSearchLoading ? "Looking for the best matches..." : `Results for "${searchQuery.trim()}"`}
+                              {isSearchLoading
+                                ? t("search.searching", "Looking for the best matches...")
+                                : t("search.results_for", 'Results for ":query"', { query: searchQuery.trim() })}
                             </p>
                           </div>
                           <button
                             type="submit"
                             className="hidden rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-primary transition hover:bg-primary hover:text-primary-foreground sm:inline-flex"
                           >
-                            See all
+                            {t("search.see_all", "See all")}
                           </button>
                         </div>
                       </div>
@@ -349,8 +381,8 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                         ) : searchResults.length > 0 ? (
                           <div className="space-y-2">
                             {searchResults.map((product) => {
-                              const displayPrice = product.salePrice ?? product.price;
-                              const hasDiscount = product.salePrice !== null && product.salePrice < product.price;
+                              const displayPrice = resolveEffectivePrice(product.price, product.salePrice);
+                              const hasDiscount = hasActiveSalePrice(product.price, product.salePrice);
 
                               return (
                                 <button
@@ -370,8 +402,8 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                                       <div className="min-w-0">
                                         <p className="line-clamp-1 text-sm font-bold text-foreground">{product.name}</p>
                                         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                          {product.brand && <span>{product.brand.name}</span>}
-                                          {product.category && <span className="rounded-full bg-muted px-2 py-0.5">{product.category.name}</span>}
+                                          {product.brand && <span>{translateBrandName(product.brand)}</span>}
+                                          {product.category && <span className="rounded-full bg-muted px-2 py-0.5">{translateCategoryName(product.category)}</span>}
                                           {product.sku && <span>SKU: {product.sku}</span>}
                                         </div>
                                       </div>
@@ -391,7 +423,9 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                                             : "bg-destructive/10 text-destructive"
                                         }`}
                                       >
-                                        {product.stock > 0 ? "In stock" : "Out of stock"}
+                                        {product.stock > 0
+                                          ? t("search.in_stock", "In stock")
+                                          : t("search.out_of_stock", "Out of stock")}
                                       </span>
                                     </div>
                                   </div>
@@ -401,15 +435,15 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                           </div>
                         ) : (
                           <div className="flex flex-col items-center justify-center rounded-[1.35rem] border border-dashed border-border px-6 py-12 text-center">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-                              <Search className="h-6 w-6" />
-                            </div>
-                            <p className="mt-4 text-base font-bold text-foreground">No direct matches found</p>
-                            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                              Try a different keyword, brand name, SKU, or continue to the full results page.
-                            </p>
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <Search className="h-6 w-6" />
                           </div>
-                        )}
+                          <p className="mt-4 text-base font-bold text-foreground">{t("search.no_matches_title", "No direct matches found")}</p>
+                          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                            {t("search.no_matches_description", "Try a different keyword, brand name, SKU, or continue to the full results page.")}
+                          </p>
+                        </div>
+                      )}
                       </div>
                     </div>
                   )}
@@ -420,9 +454,24 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
               </form>
             </div>
 
+            <div className="flex items-center justify-end md:hidden">
+              <LanguageToggle className="py-1" />
+            </div>
+
             {/* Icons & Account */}
             <div className="hidden items-center justify-end gap-1.5 lg:flex lg:gap-2">
               <ThemeToggle />
+              <button
+                className="interactive relative inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:text-primary"
+                onClick={() => setWishlistOpen(true)}
+              >
+                <Heart className={`h-5 w-5 ${wishlistItemCount > 0 ? "fill-current" : ""}`} />
+                {wishlistItemCount > 0 && (
+                  <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                    {wishlistItemCount}
+                  </span>
+                )}
+              </button>
               <button 
                 className="interactive relative inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:text-primary"
                 onClick={() => setCartOpen(true)}
@@ -450,7 +499,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                           {auth.user.canAccessAdminPanel ? (
                              <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-[#a12863] bg-[#a12863]/10 px-1.5 py-0.5 rounded-full">
                                 <LayoutDashboard className="h-2 w-2" />
-                                Dashboard
+                                {t("common.dashboard", "Dashboard")}
                              </span>
                           ) : (
                              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{auth.user.role.replace("_", " ")}</span>
@@ -476,20 +525,20 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                         <DropdownMenuItem asChild className="rounded-xl px-4 py-3 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
                           <Link href="/dashboard" className="flex items-center gap-3 w-full font-bold text-sm">
                             <LayoutDashboard className="h-4 w-4" />
-                            Admin Dashboard
+                            {t("storefront.admin_dashboard", "Admin Dashboard")}
                           </Link>
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuItem asChild className="rounded-xl px-4 py-3 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
                         <Link href="/account" className="flex items-center gap-3 w-full font-bold text-sm">
                           <ShoppingBag className="h-4 w-4" />
-                          My Orders
+                          {t("storefront.my_orders", "My Orders")}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className="rounded-xl px-4 py-3 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
                         <Link href="/account" className="flex items-center gap-3 w-full font-bold text-sm">
                           <Settings className="h-4 w-4" />
-                          Account Settings
+                          {t("storefront.account_settings", "Account Settings")}
                         </Link>
                       </DropdownMenuItem>
                     </div>
@@ -501,7 +550,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                        >
                          <div className="flex items-center gap-3 w-full font-bold text-sm">
                            <LogOut className="h-4 w-4" />
-                           Log Out
+                           {t("storefront.log_out", "Log Out")}
                          </div>
                        </DropdownMenuItem>
                     </div>
@@ -512,7 +561,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                       <User className="h-5 w-5" />
                    </div>
-                   <span className="text-sm font-black uppercase tracking-widest text-foreground transition-colors group-hover:text-primary">Sign In</span>
+                   <span className="text-sm font-black uppercase tracking-widest text-foreground transition-colors group-hover:text-primary">{t("common.sign_in", "Sign In")}</span>
                 </Link>
               )}
             </div>
@@ -551,22 +600,22 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                 </div>
               </div>
               <div>
-                <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Company</h4>
+                <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("common.company", "Company")}</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link href="#">About Us</Link></li>
+                  <li><Link href="#">{t("common.about_us", "About Us")}</Link></li>
                 </ul>
               </div>
               <div>
-                <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Support</h4>
+                <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("common.support", "Support")}</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground font-medium">
-                  <li><Link href="#" className="hover:text-primary transition-colors">Help Center</Link></li>
-                  <li><Link href="/refund-policy" className="hover:text-primary transition-colors">Refund Policy</Link></li>
-                  <li><Link href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-                  <li><Link href="/terms" className="hover:text-primary transition-colors">Terms & Conditions</Link></li>
+                  <li><Link href="#" className="hover:text-primary transition-colors">{t("common.help_center", "Help Center")}</Link></li>
+                  <li><Link href="/refund-policy" className="hover:text-primary transition-colors">{t("common.refund_policy", "Refund Policy")}</Link></li>
+                  <li><Link href="/privacy-policy" className="hover:text-primary transition-colors">{t("common.privacy_policy", "Privacy Policy")}</Link></li>
+                  <li><Link href="/terms" className="hover:text-primary transition-colors">{t("common.terms_conditions", "Terms & Conditions")}</Link></li>
                 </ul>
               </div>
               <div>
-                <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Follow Us</h4>
+                <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("common.follow_us", "Follow Us")}</h4>
                 <div className="mb-5 flex items-center gap-3">
                    {footerSetting.socialLinks.map((link, idx) => (
                      <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
@@ -578,7 +627,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                      </a>
                    ))}
                 </div>
-                <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Payment</h4>
+                <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("common.payment", "Payment")}</h4>
                 <div className="grid grid-cols-2 gap-2">
                   {footerSetting.paymentMethods.map((p, idx) => (
                     <div key={idx} className="flex flex-col items-center justify-center rounded-xl border border-border bg-background p-2 text-center text-[10px] font-bold gap-1">
@@ -601,15 +650,16 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetContent side="left" className="w-[88vw] max-w-sm border-r border-border/70 bg-card p-0">
           <SheetHeader className="p-6 text-left border-b border-border">
-            <SheetTitle className="text-2xl font-black">Browse FutureBD</SheetTitle>
+            <SheetTitle className="text-2xl font-black">{t("storefront.browse_futurebd", "Browse FutureBD")}</SheetTitle>
           </SheetHeader>
           <div className="h-full overflow-y-auto pb-20">
             <div className="p-6 space-y-6">
+              <LanguageToggle className="justify-between py-1" />
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70">Categories</div>
+                  <div className="text-xs font-black uppercase tracking-[0.2em] text-primary/70">{t("common.categories", "Categories")}</div>
                   <Link href="/categories/all" onClick={() => setMobileMenuOpen(false)} className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">
-                    View All
+                    {t("common.view_all", "View All")}
                   </Link>
                 </div>
                 <Accordion type="single" collapsible className="w-full space-y-2">
@@ -623,7 +673,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                               onClick={(e) => { e.stopPropagation(); setMobileMenuOpen(false); }}
                               className="flex-1 text-left"
                             >
-                              {category.name}
+                              {translateCategoryName(category)}
                             </Link>
                           </AccordionTrigger>
                           <AccordionContent className="pt-2 pl-4 space-y-1">
@@ -635,7 +685,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                                 className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
                               >
                                 <div className="h-1.5 w-1.5 rounded-full bg-primary/30" />
-                                {child.name}
+                                {translateCategoryName(child)}
                               </Link>
                             ))}
                           </AccordionContent>
@@ -646,18 +696,24 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                           onClick={() => setMobileMenuOpen(false)}
                           className="flex min-h-12 items-center justify-between rounded-xl border border-border bg-muted/20 px-4 py-3 text-sm font-bold hover:bg-muted/40 transition-colors"
                         >
-                          <span>{category.name}</span>
+                          <span>{translateCategoryName(category)}</span>
                           <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         </Link>
                       )}
                     </AccordionItem>
                   ))}
                 </Accordion>
+                {nestedCategories.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
+                    {t("common.no_categories", "No categories available.")}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </SheetContent>
       </Sheet>
+      <WishlistSheet open={wishlistOpen} onOpenChange={setWishlistOpen} />
       <CartSheet open={cartOpen} onOpenChange={setCartOpen} />
     </div>
   );

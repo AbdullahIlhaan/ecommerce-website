@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Lato:wght@300;400;700;900&family=Nunito:wght@400;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Lato:wght@300;400;700;900&family=Nunito:wght@400;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -50,6 +50,8 @@
     --surface-muted: 220 20% 98%;
     --text-soft: 220 10% 46%;
     --text-strong: 220 25% 10%;
+    --font-body: "Lato", system-ui, sans-serif;
+    --font-heading: "Nunito", system-ui, sans-serif;
 
     --sidebar-background: 220 25% 10%;
     --sidebar-foreground: 220 14% 80%;
@@ -95,6 +97,8 @@
     --surface-muted: 220 22% 12%;
     --text-soft: 220 10% 64%;
     --text-strong: 220 14% 95%;
+    --font-body: "Lato", system-ui, sans-serif;
+    --font-heading: "Nunito", system-ui, sans-serif;
 
     --sidebar-background: 220 30% 5%;
     --sidebar-foreground: 220 14% 80%;
@@ -112,9 +116,14 @@
   * {
     @apply border-border;
   }
+  html[data-locale="bn"] {
+    --font-body: "Hind Siliguri", system-ui, sans-serif;
+    --font-heading: "Hind Siliguri", system-ui, sans-serif;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: "Lato", system-ui, sans-serif;
+    font-family: var(--font-body);
     min-width: 320px;
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
@@ -125,7 +134,7 @@
   h2,
   h3,
   h4 {
-    font-family: "Nunito", system-ui, sans-serif;
+    font-family: var(--font-heading);
   }
 
   html,

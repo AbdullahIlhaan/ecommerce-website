@@ -14,6 +14,8 @@ import {
 import { useState } from "react";
 import { Link } from "@inertiajs/react";
 import { useCart } from "@/hooks/use-cart";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { hasActiveSalePrice, resolveEffectivePrice } from "@/lib/pricing";
 
 type ProductDetail = ProductProps & {
   description: string;
@@ -24,10 +26,12 @@ type ProductDetail = ProductProps & {
 
 export default function ProductShow({ product, relatedProducts }: { product: ProductDetail, relatedProducts: ProductProps[] }) {
   const { addToCart } = useCart();
+  const { isInWishlist, removeFromWishlist } = useWishlist();
   const [selectedImage, setSelectedImage] = useState(product.images[0] || "/images/placeholder-product.png");
   const [quantity, setQuantity] = useState(1);
 
-  const hasDiscount = product.salePrice && product.salePrice < product.price;
+  const hasDiscount = hasActiveSalePrice(product.price, product.salePrice);
+  const displayPrice = resolveEffectivePrice(product.price, product.salePrice);
   const discountPercentage = hasDiscount
     ? Math.round(((product.price - (product.salePrice ?? 0)) / product.price) * 100)
     : 0;
@@ -41,6 +45,9 @@ export default function ProductShow({ product, relatedProducts }: { product: Pro
       image: product.images[0] || "/images/placeholder-product.png",
       stock: product.stock
     }, quantity);
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id, { silent: true });
+    }
   };
 
   return (
@@ -112,12 +119,12 @@ export default function ProductShow({ product, relatedProducts }: { product: Pro
           <div className="mb-8 flex items-baseline gap-4 rounded-2xl bg-muted/30 p-6 border border-border/50">
             {hasDiscount ? (
               <>
-                <span className="text-4xl font-black text-primary">BDT {product.salePrice?.toLocaleString()}</span>
+                <span className="text-4xl font-black text-primary">BDT {displayPrice.toLocaleString()}</span>
                 <span className="text-xl text-muted-foreground line-through opacity-60">BDT {product.price.toLocaleString()}</span>
                 <span className="rounded-full bg-primary/10 px-3 py-1 text-sm font-bold text-primary">-{discountPercentage}%</span>
               </>
             ) : (
-              <span className="text-4xl font-black text-foreground">BDT {product.price.toLocaleString()}</span>
+              <span className="text-4xl font-black text-foreground">BDT {displayPrice.toLocaleString()}</span>
             )}
           </div>
 

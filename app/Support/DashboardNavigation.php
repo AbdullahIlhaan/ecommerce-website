@@ -81,6 +81,7 @@ class DashboardNavigation
                 'label' => 'Settings',
                 'items' => [
                     self::item('Footer Settings', 'footer-settings.index', 'Settings', [UserRole::SuperAdmin, UserRole::Admin]),
+                    self::item('Translations', 'translations.index', 'Languages', [UserRole::SuperAdmin, UserRole::Admin]),
                 ],
             ],
         ]);

@@ -20,6 +20,7 @@ import {
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Link, router, usePage, Head } from "@inertiajs/react";
 import { formatPaymentMethod } from "@/lib/payments";
+import { resolveEffectivePrice } from "@/lib/pricing";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -143,9 +144,10 @@ function normalizeLocationResult(result: {
 }
 
 export default function Checkout() {
-  const { items, subtotal, clearCart, itemCount } = useCart();
+  const { items, subtotal, clearCart, itemCount, isLoaded, syncCart } = useCart();
   const { auth, errors } = usePage<{ auth: any, errors: Record<string, string> }>().props;
   const [loading, setLoading] = useState(false);
+  const [syncingCart, setSyncingCart] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
   const [locationSuggestions, setLocationSuggestions] = useState<LocationSuggestion[]>([]);
   const [locationLoading, setLocationLoading] = useState(false);
@@ -169,6 +171,59 @@ export default function Checkout() {
   const hasPinnedLocation = Boolean(formData.deliveryLocationLabel && formData.deliveryLatitude && formData.deliveryLongitude);
   const hasDeliveryZone = Boolean(formData.deliveryZone);
   const canPlaceOrder = items.length > 0 && hasDeliveryZone;
+  const checkoutError = errors.items || errors.total || errors.deliveryCharge;
+  const cartIdsKey = useMemo(() => items.map((item) => item.id).sort().join("|"), [items]);
+
+  useEffect(() => {
+    if (!isLoaded || items.length === 0) {
+      return;
+    }
+
+    const params = new URLSearchParams();
+    items.forEach((item) => params.append("ids[]", item.id));
+
+    const controller = new AbortController();
+
+    const syncCheckoutCart = async () => {
+      setSyncingCart(true);
+
+      try {
+        const response = await fetch(`/checkout/cart-items?${params.toString()}`, {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Cart refresh failed with status ${response.status}`);
+        }
+
+        const data = await response.json() as {
+          items?: Array<{
+            id: string;
+            name: string;
+            price: number;
+            salePrice?: number | null;
+            image: string;
+            stock: number;
+          }>;
+        };
+
+        syncCart(data.items ?? []);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Failed to sync checkout cart", error);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setSyncingCart(false);
+        }
+      }
+    };
+
+    void syncCheckoutCart();
+
+    return () => controller.abort();
+  }, [cartIdsKey, isLoaded, syncCart]);
 
   useEffect(() => {
     const query = locationQuery.trim();
@@ -279,7 +334,7 @@ export default function Checkout() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canPlaceOrder) return;
+    if (!canPlaceOrder || syncingCart) return;
     setLoading(true);
     router.post("/checkout", {
       ...formData,
@@ -287,7 +342,7 @@ export default function Checkout() {
         id: item.id,
         name: item.name,
         quantity: item.quantity,
-        price: item.salePrice ?? item.price,
+        price: resolveEffectivePrice(item.price, item.salePrice),
       })),
       subtotal,
       deliveryCharge,
@@ -407,6 +462,7 @@ export default function Checkout() {
                 )}
 
                 {locationError && <p className="text-xs font-medium text-destructive">{locationError}</p>}
+                {errors.deliveryLocationLabel && <p className="text-xs font-medium text-destructive">{errors.deliveryLocationLabel}</p>}
               </div>
 
               <div className="space-y-2 md:col-span-2">
@@ -448,6 +504,7 @@ export default function Checkout() {
                 <div className="text-left"><div className="font-bold text-sm">Online Payment</div><div className="text-[10px] text-muted-foreground">bKash, Cards etc.</div></div>
               </button>
             </div>
+            {errors.paymentMethod && <p className="text-xs font-medium text-destructive">{errors.paymentMethod}</p>}
           </section>
         </div>
 
@@ -455,14 +512,19 @@ export default function Checkout() {
           <div className="sticky top-28 rounded-3xl border border-border bg-card p-6 shadow-lg md:p-8">
             <h3 className="mb-6 text-xl font-bold">Summary</h3>
             <div className="mb-6 space-y-4">
-              <div className="max-h-60 overflow-y-auto pr-2 space-y-4">{items.map((item) => ( <div key={item.id} className="flex gap-3"><img src={item.image} className="h-12 w-10 rounded-lg border border-border object-cover" /><div className="flex-1"><div className="line-clamp-1 text-xs font-bold">{item.name}</div><div className="text-[10px] text-muted-foreground">{item.quantity} x BDT {(item.salePrice ?? item.price).toLocaleString()}</div></div></div> ))}</div>
+              <div className="max-h-60 overflow-y-auto pr-2 space-y-4">{items.map((item) => ( <div key={item.id} className="flex gap-3"><img src={item.image} className="h-12 w-10 rounded-lg border border-border object-cover" /><div className="flex-1"><div className="line-clamp-1 text-xs font-bold">{item.name}</div><div className="text-[10px] text-muted-foreground">{item.quantity} x BDT {resolveEffectivePrice(item.price, item.salePrice).toLocaleString()}</div></div></div> ))}</div>
               <Separator />
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span className="font-bold">BDT {subtotal.toLocaleString()}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Delivery</span><span className="font-bold">BDT {deliveryCharge.toLocaleString()}</span></div>
               <Separator />
               <div className="flex justify-between text-xl font-black"><span>Total</span><span className="text-primary">BDT {total.toLocaleString()}</span></div>
             </div>
-            <Button disabled={loading || !canPlaceOrder} type="submit" className="h-14 w-full rounded-2xl bg-primary text-lg font-bold shadow-lg shadow-primary/20 transition-all active:scale-95">{loading ? "Processing..." : "Place Order"}<Lock className="ml-2 h-4 w-4" /></Button>
+            {checkoutError && (
+              <div className="mb-4 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                {checkoutError}
+              </div>
+            )}
+            <Button disabled={loading || syncingCart || !canPlaceOrder} type="submit" className="h-14 w-full rounded-2xl bg-primary text-lg font-bold shadow-lg shadow-primary/20 transition-all active:scale-95">{loading ? "Processing..." : syncingCart ? "Updating Cart..." : "Place Order"}<Lock className="ml-2 h-4 w-4" /></Button>
             <div className="mt-6 space-y-3"><div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground"><ShieldCheck className="h-4 w-4 text-emerald-500" /> Secure Checkout</div></div>
           </div>
         </div>

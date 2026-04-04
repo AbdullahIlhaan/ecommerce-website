@@ -1,6 +1,7 @@
 import {
   LayoutDashboard, Package, FolderTree, Award, Users,
   ShoppingCart, Ticket, Star, ChevronLeft, Shield, User, Circle, Settings,
+  Languages,
   Images
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -25,6 +26,7 @@ const iconMap = {
   Shield,
   User,
   Settings,
+  Languages,
   Images,
 } as const;
 

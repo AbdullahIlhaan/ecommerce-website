@@ -4,7 +4,9 @@ namespace App\Http\Middleware;
 
 use App\Support\DashboardNavigation;
 use App\Support\SocialAuth;
+use App\Support\TranslationDictionary;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -42,6 +44,14 @@ class HandleInertiaRequests extends Middleware
                 'dashboard' => fn () => \App\Support\DashboardNavigation::forUser($request->user()),
             ],
             'footerSetting' => \App\Support\DashboardData::footerSetting(\App\Models\FooterSetting::first()),
+            'localization' => fn () => [
+                'defaultLocale' => config('app.locale', 'en'),
+                'availableLocales' => [
+                    ['code' => 'en', 'label' => 'English', 'nativeLabel' => 'English'],
+                    ['code' => 'bn', 'label' => 'Bangla', 'nativeLabel' => 'বাংলা'],
+                ],
+                'translations' => Schema::hasTable('translations') ? TranslationDictionary::shared() : [],
+            ],
         ];
     }
 }

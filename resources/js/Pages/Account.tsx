@@ -118,7 +118,7 @@ function Account() {
                     <Table>
                       <TableHeader className="bg-muted/30">
                         <TableRow>
-                          <TableHead className="font-bold">Order ID</TableHead>
+                          <TableHead className="font-bold">Invoice ID</TableHead>
                           <TableHead className="font-bold">Date</TableHead>
                           <TableHead className="font-bold">Items</TableHead>
                           <TableHead className="font-bold">Total</TableHead>
@@ -129,8 +129,13 @@ function Account() {
                       <TableBody>
                         {orders.map((order) => (
                           <TableRow key={order.id} className="group hover:bg-muted/20">
-                            <TableCell className="font-mono text-xs font-bold text-muted-foreground uppercase">
-                              #{order.id.slice(0, 8)}
+                            <TableCell>
+                              <div className="font-mono text-xs font-bold text-foreground uppercase">
+                                {order.invoiceNumber || `INV-${order.id.slice(0, 8).toUpperCase()}`}
+                              </div>
+                              <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                Order Ref #{order.id.slice(0, 8).toUpperCase()}
+                              </div>
                             </TableCell>
                             <TableCell className="text-sm font-medium">
                               {order.formattedDate}

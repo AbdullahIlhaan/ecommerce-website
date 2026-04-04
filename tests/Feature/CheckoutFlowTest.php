@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -75,6 +76,29 @@ class CheckoutFlowTest extends TestCase
         $this->assertSame('cod', $order->payment_method);
         $this->assertSame('pending', $order->payment_status);
         $this->assertSame(18, $product->fresh()->stock);
+    }
+
+    public function test_checkout_cart_items_endpoint_returns_latest_product_pricing(): void
+    {
+        $product = $this->createCheckoutProduct(stock: 12, price: 799);
+
+        $product->update([
+            'sale_price' => 699,
+            'images' => ['/images/demo-product.jpg'],
+        ]);
+
+        $response = $this->getJson('/checkout/cart-items?ids[]=' . $product->id);
+
+        $response
+            ->assertOk()
+            ->assertJsonFragment([
+                'id' => $product->id,
+                'name' => 'Demo Product',
+                'price' => 799.0,
+                'salePrice' => 699.0,
+                'image' => '/images/demo-product.jpg',
+                'stock' => 12,
+            ]);
     }
 
     public function test_checkout_rejects_stale_or_manipulated_totals(): void
@@ -216,6 +240,48 @@ class CheckoutFlowTest extends TestCase
         $this->assertNull($order->delivery_location_label);
         $this->assertNull($order->delivery_latitude);
         $this->assertNull($order->delivery_longitude);
+        $this->assertSame(19, $product->fresh()->stock);
+    }
+
+    public function test_checkout_links_the_customer_to_the_authenticated_user(): void
+    {
+        $product = $this->createCheckoutProduct(stock: 20, price: 499);
+        $user = User::factory()->create([
+            'name' => 'Signed In Customer',
+            'email' => 'signed-in@example.com',
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->post('/checkout', [
+                'name' => 'Signed In Customer',
+                'email' => 'signed-in@example.com',
+                'phone' => '01700000000',
+                'address' => 'House 12, Road 5',
+                'city' => 'Dhaka',
+                'deliveryZone' => 'inside_dhaka',
+                'deliveryLocationLabel' => 'Mirpur DOHS, Dhaka',
+                'deliveryLatitude' => 23.8223,
+                'deliveryLongitude' => 90.3654,
+                'paymentMethod' => 'cod',
+                'items' => [
+                    [
+                        'id' => $product->id,
+                        'quantity' => 1,
+                    ],
+                ],
+                'subtotal' => 499,
+                'deliveryCharge' => 100,
+                'total' => 599,
+            ]);
+
+        $response->assertSessionHasNoErrors();
+
+        $order = Order::query()->with('customer')->latest()->first();
+
+        $this->assertNotNull($order);
+        $this->assertNotNull($order->customer);
+        $this->assertSame($user->id, $order->customer->user_id);
         $this->assertSame(19, $product->fresh()->stock);
     }
 

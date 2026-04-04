@@ -16,6 +16,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\UserController;
 use App\Models\Category;
 use App\Models\HeroBanner;
@@ -61,10 +62,12 @@ Route::get('/', fn () => Inertia::render('Home', [
             ->limit(10)
             ->get()
     ),
-    'brands' => \App\Models\Brand::query()
-        ->orderBy('name')
-        ->limit(12)
-        ->get(),
+    'brands' => DashboardData::brands(
+        \App\Models\Brand::query()
+            ->orderBy('name')
+            ->limit(12)
+            ->get()
+    ),
 ]))->name('home');
 
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
@@ -72,6 +75,7 @@ Route::get('/shop/search/suggestions', [ShopController::class, 'suggestions'])->
 Route::get('/categories/all', [ShopController::class, 'categories'])->name('shop.categories');
 Route::get('/products/{product}', [ShopController::class, 'show'])->name('shop.show');
 Route::get('/checkout', [ShopController::class, 'checkout'])->name('shop.checkout');
+Route::get('/checkout/cart-items', [ShopController::class, 'cartItems'])->name('shop.checkout.cart-items');
 Route::post('/checkout', [ShopController::class, 'storeOrder'])->name('shop.checkout.store');
 Route::get('/checkout/success', [ShopController::class, 'checkoutSuccess'])->name('shop.checkout.success');
 Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
@@ -173,6 +177,11 @@ Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
 
     Route::get('/footer-settings', [FooterSettingController::class, 'index'])->name('footer-settings.index');
     Route::post('/footer-settings', [FooterSettingController::class, 'update'])->name('footer-settings.update');
+
+    Route::get('/translations', [TranslationController::class, 'index'])->name('translations.index');
+    Route::post('/translations', [TranslationController::class, 'store'])->name('translations.store');
+    Route::put('/translations/{translation}', [TranslationController::class, 'update'])->name('translations.update');
+    Route::delete('/translations/{translation}', [TranslationController::class, 'destroy'])->name('translations.destroy');
 });
 
 Route::middleware(['auth', 'role:super_admin'])->group(function () {

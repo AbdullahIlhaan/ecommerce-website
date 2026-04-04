@@ -54,13 +54,15 @@ class ProductController extends Controller
             'sku' => ['required', 'string', 'max:255', Rule::unique('products', 'sku')->ignore($productId)],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
-            'salePrice' => ['nullable', 'numeric', 'min:0'],
+            'salePrice' => ['nullable', 'numeric', 'min:0', 'lt:price'],
             'stock' => ['nullable', 'integer', 'min:0'],
             'status' => ['required', Rule::in(['active', 'draft', 'archived'])],
             'categoryId' => ['nullable', 'string', Rule::exists('categories', 'id')],
             'brandId' => ['nullable', 'string', Rule::exists('brands', 'id')],
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:4096'],
+        ], [
+            'salePrice.lt' => 'Sale price must be lower than the regular price.',
         ]);
 
         $product = $productId ? Product::find($productId) : null;
