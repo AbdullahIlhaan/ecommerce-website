@@ -20,6 +20,7 @@ import {
   Instagram,
   Linkedin,
   Github,
+  Youtube,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -58,6 +59,19 @@ type StorefrontLayoutProps = {
   title?: string;
 };
 
+declare global {
+  interface Window {
+    fbq?: ((...args: unknown[]) => void) & {
+      callMethod?: (...args: unknown[]) => void;
+      queue?: unknown[];
+      loaded?: boolean;
+      version?: string;
+      push?: (...args: unknown[]) => void;
+    };
+    _fbq?: ((...args: unknown[]) => void) | undefined;
+  }
+}
+
 type SearchSuggestion = {
   id: string;
   name: string;
@@ -78,6 +92,9 @@ type FooterSetting = {
   address: string | null;
   phone: string | null;
   email: string | null;
+  facebookUrl: string | null;
+  youtubeUrl: string | null;
+  facebookPixelId: string | null;
   copyright: string | null;
   paymentMethods: Array<{ name: string; imagePath: string | null }>;
   socialLinks: Array<{ platform: string; url: string }>;
@@ -112,11 +129,13 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
   const { itemCount: wishlistItemCount } = useWishlist();
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
   const { t } = useLocalization();
-  const { auth, categories, footerSetting } = usePage<{
+  const page = usePage<{
     auth: { user: AuthUser | null };
     categories?: Category[];
     footerSetting: FooterSetting;
-  }>().props;
+  }>();
+  const { auth, categories, footerSetting } = page.props;
+  const currentUrl = page.url;
 
   const categoryItems = categories ?? [];
   const rootCategories = categoryItems.filter((category) => category.parentId === null);
@@ -226,6 +245,43 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
     };
   }, [searchQuery]);
 
+  useEffect(() => {
+    const pixelId = footerSetting.facebookPixelId?.trim();
+    if (!pixelId) {
+      return;
+    }
+
+    if (!window.fbq) {
+      ((f: Window, b: Document, e: string, v: string, n?: { (...args: unknown[]): void; callMethod?: (...args: unknown[]) => void; queue?: unknown[]; loaded?: boolean; version?: string }, t?: HTMLScriptElement, s?: Element) => {
+        if (f.fbq) {
+          return;
+        }
+        n = (...args: unknown[]) => {
+          if (n?.callMethod) {
+            n.callMethod(...args);
+            return;
+          }
+          n?.queue?.push(args);
+        };
+        if (!f._fbq) {
+          f._fbq = n;
+        }
+        n.push = n;
+        n.loaded = true;
+        n.version = "2.0";
+        n.queue = [];
+        t = b.createElement(e) as HTMLScriptElement;
+        t.async = true;
+        t.src = v;
+        s = b.getElementsByTagName(e)[0];
+        s.parentNode?.insertBefore(t, s);
+      })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js");
+      window.fbq("init", pixelId);
+    }
+
+    window.fbq("track", "PageView");
+  }, [footerSetting.facebookPixelId, currentUrl]);
+
   const handleSuggestionSelect = (productId: string) => {
     setIsSearchOpen(false);
     router.visit(`/products/${productId}`);
@@ -269,10 +325,10 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
       {/* Main Header */}
       <header className="safe-top sticky top-0 z-30 border-b border-border/60 bg-background/95 backdrop-blur-xl">
         <div className="page_container px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-3 py-3 lg:flex-row lg:items-center lg:gap-6 lg:py-5">
+          <div className="flex flex-col gap-3 py-3 xl:flex-row xl:items-center xl:gap-6 xl:py-5">
             <div className="flex shrink-0 items-center justify-between">
               <BrandLogo logoPath={footerSetting.logoPath} logoText={footerSetting.logoText} />
-              <div className="flex items-center gap-1 sm:gap-1.5 lg:hidden">
+              <div className="flex items-center gap-1 sm:gap-1.5 xl:hidden">
                 <ThemeToggle />
                 <button
                   className="interactive relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-primary"
@@ -459,7 +515,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
             </div>
 
             {/* Icons & Account */}
-            <div className="hidden items-center justify-end gap-1.5 lg:flex lg:gap-2">
+            <div className="hidden items-center justify-end gap-1.5 xl:flex xl:gap-2">
               <ThemeToggle />
               <button
                 className="interactive relative inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:text-primary"
@@ -617,6 +673,16 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
               <div>
                 <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("common.follow_us", "Follow Us")}</h4>
                 <div className="mb-5 flex items-center gap-3">
+                  {footerSetting.facebookUrl && (
+                    <a href={footerSetting.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                      <Facebook className="h-5 w-5" />
+                    </a>
+                  )}
+                  {footerSetting.youtubeUrl && (
+                    <a href={footerSetting.youtubeUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                      <Youtube className="h-5 w-5" />
+                    </a>
+                  )}
                    {footerSetting.socialLinks.map((link, idx) => (
                      <a key={idx} href={link.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                        {link.platform === 'Facebook' && <Facebook className="h-5 w-5" />}
@@ -624,6 +690,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                        {link.platform === 'Instagram' && <Instagram className="h-5 w-5" />}
                        {link.platform === 'Linkedin' && <Linkedin className="h-5 w-5" />}
                        {link.platform === 'Github' && <Github className="h-5 w-5" />}
+                       {link.platform === 'Youtube' && <Youtube className="h-5 w-5" />}
                      </a>
                    ))}
                 </div>

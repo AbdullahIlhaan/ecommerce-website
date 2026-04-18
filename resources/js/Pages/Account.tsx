@@ -53,7 +53,7 @@ function Account() {
   const { auth, flash, orders } = usePage<{ 
     auth: { user: AuthUser }; 
     flash: { success?: string; error?: string };
-    orders: any[];
+    orders: Order[];
   }>().props;
   
   const user = auth.user;

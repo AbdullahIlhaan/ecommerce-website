@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Translation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -13,6 +14,14 @@ class TranslationController extends Controller
 {
     public function index(): Response
     {
+        if (! $this->translationsTableExists()) {
+            return Inertia::render('Translations', [
+                'translations' => [],
+                'groups' => [],
+                'tableMissing' => true,
+            ]);
+        }
+
         $translations = Translation::query()
             ->orderByRaw('case when group_name is null or group_name = "" then 1 else 0 end')
             ->orderBy('group_name')
@@ -27,11 +36,16 @@ class TranslationController extends Controller
                 ->unique()
                 ->values()
                 ->all(),
+            'tableMissing' => false,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        if ($redirect = $this->redirectIfTableMissing()) {
+            return $redirect;
+        }
+
         Translation::query()->create($this->validated($request));
 
         return to_route('translations.index')->with('success', 'Translation created.');
@@ -39,6 +53,10 @@ class TranslationController extends Controller
 
     public function update(Request $request, Translation $translation): RedirectResponse
     {
+        if ($redirect = $this->redirectIfTableMissing()) {
+            return $redirect;
+        }
+
         $translation->update($this->validated($request, $translation));
 
         return to_route('translations.index')->with('success', 'Translation updated.');
@@ -46,6 +64,10 @@ class TranslationController extends Controller
 
     public function destroy(Translation $translation): RedirectResponse
     {
+        if ($redirect = $this->redirectIfTableMissing()) {
+            return $redirect;
+        }
+
         $translation->delete();
 
         return to_route('translations.index')->with('success', 'Translation deleted.');
@@ -92,5 +114,19 @@ class TranslationController extends Controller
             'isActive' => (bool) $translation->is_active,
             'updatedAt' => $translation->updated_at?->format('Y-m-d H:i'),
         ])->all();
+    }
+
+    private function translationsTableExists(): bool
+    {
+        return Schema::hasTable('translations');
+    }
+
+    private function redirectIfTableMissing(): ?RedirectResponse
+    {
+        if ($this->translationsTableExists()) {
+            return null;
+        }
+
+        return to_route('dashboard')->with('error', 'The translations table is missing. Run the latest migrations first.');
     }
 }

@@ -25,7 +25,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 // Fix for default marker icons in Leaflet when using Vite/React
-// @ts-ignore
+// @ts-expect-error Leaflet keeps this internal method on the prototype at runtime.
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -100,6 +100,17 @@ type LocationSuggestion = {
   zone: Exclude<DeliveryZone, "">;
 };
 
+type CheckoutPageProps = {
+  auth: {
+    user?: {
+      name?: string | null;
+      email?: string | null;
+      phone?: string | null;
+    } | null;
+  };
+  errors: Record<string, string>;
+};
+
 const DELIVERY_CHARGES: Record<Exclude<DeliveryZone, "">, number> = {
   inside_dhaka: 100,
   outside_dhaka: 170,
@@ -145,7 +156,7 @@ function normalizeLocationResult(result: {
 
 export default function Checkout() {
   const { items, subtotal, clearCart, itemCount, isLoaded, syncCart } = useCart();
-  const { auth, errors } = usePage<{ auth: any, errors: Record<string, string> }>().props;
+  const { auth, errors } = usePage<CheckoutPageProps>().props;
   const [loading, setLoading] = useState(false);
   const [syncingCart, setSyncingCart] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");

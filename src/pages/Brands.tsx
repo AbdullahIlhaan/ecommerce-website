@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Search, Pencil, Trash2, Award } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -36,6 +36,9 @@ export default function BrandsPage() {
           toast({ title: "Brand updated" });
           setFormOpen(false);
         },
+        onError: (errors) => {
+          toast({ title: Object.values(errors)[0] || "Failed to update brand", variant: "destructive" });
+        },
       });
       return;
     }
@@ -45,6 +48,9 @@ export default function BrandsPage() {
       onSuccess: () => {
         toast({ title: "Brand created" });
         setFormOpen(false);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to create brand", variant: "destructive" });
       },
     });
   };
@@ -57,6 +63,9 @@ export default function BrandsPage() {
       onSuccess: () => {
         toast({ title: "Brand deleted" });
         setDeleteId(null);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to delete brand", variant: "destructive" });
       },
     });
   };
@@ -114,7 +123,12 @@ export default function BrandsPage() {
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>{editing ? "Edit Brand" : "New Brand"}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit Brand" : "New Brand"}</DialogTitle>
+            <DialogDescription>
+              Provide a brand name and optional custom slug.
+            </DialogDescription>
+          </DialogHeader>
           <div className="grid gap-4 py-2">
             <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')})} /></div>
             <div><Label>Slug</Label><Input value={form.slug} onChange={e => setForm({...form, slug: e.target.value})} className="font-mono" /></div>

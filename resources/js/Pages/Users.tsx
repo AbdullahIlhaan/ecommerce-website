@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Search, Pencil, Shield, Trash2 } from "lucide-react";
@@ -69,6 +69,9 @@ function Users() {
           toast({ title: "User updated" });
           setFormOpen(false);
         },
+        onError: (errors) => {
+          toast({ title: Object.values(errors)[0] || "Failed to update user", variant: "destructive" });
+        },
       });
       return;
     }
@@ -78,6 +81,9 @@ function Users() {
       onSuccess: () => {
         toast({ title: "User created" });
         setFormOpen(false);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to create user", variant: "destructive" });
       },
     });
   };
@@ -90,6 +96,9 @@ function Users() {
       onSuccess: () => {
         toast({ title: "User deleted" });
         setDeleteId(null);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to delete user", variant: "destructive" });
       },
     });
   };
@@ -183,6 +192,9 @@ function Users() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit User" : "Create User"}</DialogTitle>
+              <DialogDescription>
+                Set account details, contact information, role permissions, and password.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-2">
               <div className="space-y-2">

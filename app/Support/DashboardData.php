@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Customer;
+use App\Models\FlashDeal;
 use App\Models\HeroBanner;
 use App\Models\Order;
 use App\Models\Product;
@@ -99,6 +100,48 @@ class DashboardData
         ])->all();
     }
 
+    public static function flashDeals(Collection $flashDeals): array
+    {
+        return $flashDeals->map(fn (FlashDeal $flashDeal) => self::flashDeal($flashDeal))->all();
+    }
+
+    public static function flashDeal(?FlashDeal $flashDeal): ?array
+    {
+        if ($flashDeal === null) {
+            return null;
+        }
+
+        $now = now();
+        $startsAt = $flashDeal->starts_at;
+        $endsAt = $flashDeal->ends_at;
+
+        $status = 'scheduled';
+
+        if (! $flashDeal->is_active) {
+            $status = 'disabled';
+        } elseif ($endsAt && $endsAt->isPast()) {
+            $status = 'ended';
+        } elseif (($startsAt === null || $startsAt->lte($now)) && ($endsAt === null || $endsAt->gt($now))) {
+            $status = 'running';
+        }
+
+        return [
+            'id' => $flashDeal->id,
+            'name' => $flashDeal->name,
+            'startsAt' => $startsAt?->toIso8601String(),
+            'endsAt' => $endsAt?->toIso8601String(),
+            'isActive' => (bool) $flashDeal->is_active,
+            'status' => $status,
+            'productIds' => $flashDeal->relationLoaded('products')
+                ? $flashDeal->products->pluck('id')->all()
+                : [],
+            'products' => $flashDeal->relationLoaded('products')
+                ? self::products($flashDeal->products)
+                : [],
+            'createdAt' => $flashDeal->created_at?->toDateString(),
+        ];
+    }
+
     public static function products(Collection $products): array
     {
         return $products->map(fn (Product $product) => [
@@ -179,6 +222,9 @@ class DashboardData
             'address' => 'Plot 1020, Mirpur DOHS, Dhaka.',
             'phone' => '+88 09666 78 3333',
             'email' => 'support@futurebd.com',
+            'facebook_url' => null,
+            'youtube_url' => null,
+            'facebook_pixel_id' => null,
             'copyright' => '© 2018-2026 FutureBD. All rights reserved.',
             'payment_methods' => [],
             'social_links' => [],
@@ -188,6 +234,9 @@ class DashboardData
             $footerSetting = new \App\Models\FooterSetting([
                 'logo_text' => 'FutureBD',
                 'description' => 'The platform to get products from global marketplaces to Bangladesh.',
+                'facebook_url' => null,
+                'youtube_url' => null,
+                'facebook_pixel_id' => null,
                 'copyright' => '© 2018-2026 FutureBD. All rights reserved.',
                 'payment_methods' => [],
                 'social_links' => [],
@@ -202,6 +251,9 @@ class DashboardData
             'address' => $footerSetting->address ?: $defaults['address'],
             'phone' => $footerSetting->phone ?: $defaults['phone'],
             'email' => $footerSetting->email ?: $defaults['email'],
+            'facebookUrl' => $footerSetting->facebook_url ?: $defaults['facebook_url'],
+            'youtubeUrl' => $footerSetting->youtube_url ?: $defaults['youtube_url'],
+            'facebookPixelId' => $footerSetting->facebook_pixel_id ?: $defaults['facebook_pixel_id'],
             'copyright' => $footerSetting->copyright ?: $defaults['copyright'],
             'paymentMethods' => collect($footerSetting->payment_methods ?: $defaults['payment_methods'])->map(fn($m) => [
                 'name' => $m['name'] ?? '',

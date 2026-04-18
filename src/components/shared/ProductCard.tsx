@@ -125,7 +125,11 @@ export function ProductCard({ product }: { product: ProductProps }) {
           )}
         </div>
 
-        {product.stock <= 0 && (
+        {product.stock > 0 ? (
+          <p className="mt-2 text-[11px] font-bold uppercase tracking-wider text-success">
+            Qty Available: {product.stock}
+          </p>
+        ) : (
           <p className="mt-2 text-[11px] font-bold uppercase tracking-wider text-destructive">
             {t("search.out_of_stock", "Out of stock")}
           </p>

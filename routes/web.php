@@ -11,6 +11,7 @@ use App\Http\Controllers\CouponController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FooterSettingController;
+use App\Http\Controllers\FlashDealController;
 use App\Http\Controllers\HeroBannerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
@@ -19,12 +20,14 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\TranslationController;
 use App\Http\Controllers\UserController;
 use App\Models\Category;
+use App\Models\FlashDeal;
 use App\Models\HeroBanner;
 use App\Support\DashboardData;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 Route::get('/', fn () => Inertia::render('Home', [
     'categories' => DashboardData::categories(
@@ -47,14 +50,46 @@ Route::get('/', fn () => Inertia::render('Home', [
             ->limit(10)
             ->get()
     ),
-    'flashSaleProducts' => DashboardData::products(
-        \App\Models\Product::query()
-            ->where('status', 'active')
-            ->whereNotNull('sale_price')
-            ->whereRaw('sale_price < price')
-            ->limit(10)
-            ->get()
-    ),
+    'flashDeal' => Schema::hasTable('flash_deals')
+        ? DashboardData::flashDeal(
+            FlashDeal::query()
+                ->with(['products' => fn ($query) => $query
+                    ->where('status', 'active')
+                    ->orderBy('flash_deal_product.sort_order')
+                    ->limit(10)])
+                ->where('is_active', true)
+                ->where(function ($query) {
+                    $query->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+                })
+                ->where(function ($query) {
+                    $query->whereNull('ends_at')->orWhere('ends_at', '>', now());
+                })
+                ->orderByRaw('case when starts_at is null then 1 else 0 end')
+                ->orderByDesc('starts_at')
+                ->orderByDesc('updated_at')
+                ->first()
+        )
+        : null,
+    'flashSaleProducts' => Schema::hasTable('flash_deals')
+        ? data_get(DashboardData::flashDeal(
+            FlashDeal::query()
+                ->with(['products' => fn ($query) => $query
+                    ->where('status', 'active')
+                    ->orderBy('flash_deal_product.sort_order')
+                    ->limit(10)])
+                ->where('is_active', true)
+                ->where(function ($query) {
+                    $query->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+                })
+                ->where(function ($query) {
+                    $query->whereNull('ends_at')->orWhere('ends_at', '>', now());
+                })
+                ->orderByRaw('case when starts_at is null then 1 else 0 end')
+                ->orderByDesc('starts_at')
+                ->orderByDesc('updated_at')
+                ->first()
+        ), 'products', [])
+        : [],
     'trendingProducts' => DashboardData::products(
         \App\Models\Product::query()
             ->where('status', 'active')
@@ -161,6 +196,11 @@ Route::middleware(['auth', 'role:super_admin,admin'])->group(function () {
     Route::post('/hero-banners', [HeroBannerController::class, 'store'])->name('hero-banners.store');
     Route::put('/hero-banners/{heroBanner}', [HeroBannerController::class, 'update'])->name('hero-banners.update');
     Route::delete('/hero-banners/{heroBanner}', [HeroBannerController::class, 'destroy'])->name('hero-banners.destroy');
+
+    Route::get('/flash-deals', [FlashDealController::class, 'index'])->name('flash-deals.index');
+    Route::post('/flash-deals', [FlashDealController::class, 'store'])->name('flash-deals.store');
+    Route::put('/flash-deals/{flashDeal}', [FlashDealController::class, 'update'])->name('flash-deals.update');
+    Route::delete('/flash-deals/{flashDeal}', [FlashDealController::class, 'destroy'])->name('flash-deals.destroy');
 
     Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
     Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store');

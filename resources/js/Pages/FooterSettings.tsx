@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useState, type ReactNode } from "react";
 import { router, usePage } from "@inertiajs/react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,10 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, ImagePlus, Plus, Globe, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin, Github } from "lucide-react";
+import { Trash2, ImagePlus, Plus, Globe, Mail, Phone, MapPin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { ReactNode } from "react";
 
 type FooterSetting = {
   id: string;
@@ -19,13 +18,25 @@ type FooterSetting = {
   address: string | null;
   phone: string | null;
   email: string | null;
+  facebookUrl: string | null;
+  youtubeUrl: string | null;
+  facebookPixelId: string | null;
   copyright: string | null;
   paymentMethods: Array<{ name: string; imagePath: string | null }>;
   socialLinks: Array<{ platform: string; url: string }>;
 };
 
+type FooterErrors = Record<string, string | undefined>;
+
+type PaymentMethodForm = {
+  name: string;
+  imagePath: string | null;
+  file?: File;
+  preview?: string;
+};
+
 export default function FooterSettingsPage() {
-  const { footerSetting, errors } = usePage<{ footerSetting: FooterSetting, errors: any }>().props;
+  const { footerSetting, errors } = usePage<{ footerSetting: FooterSetting; errors: FooterErrors }>().props;
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState(footerSetting.logoPath);
   
@@ -35,9 +46,12 @@ export default function FooterSettingsPage() {
     address: footerSetting.address ?? "",
     phone: footerSetting.phone ?? "",
     email: footerSetting.email ?? "",
+    facebookUrl: footerSetting.facebookUrl ?? "",
+    youtubeUrl: footerSetting.youtubeUrl ?? "",
+    facebookPixelId: footerSetting.facebookPixelId ?? "",
     copyright: footerSetting.copyright ?? "",
     socialLinks: footerSetting.socialLinks ?? [],
-    paymentMethods: footerSetting.paymentMethods ?? [],
+    paymentMethods: (footerSetting.paymentMethods ?? []) as PaymentMethodForm[],
   });
 
   const handleLogoChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -76,18 +90,21 @@ export default function FooterSettingsPage() {
 
   const handlePaymentImageChange = (index: number, file: File) => {
     const newMethods = [...form.paymentMethods];
-    (newMethods[index] as any).file = file;
-    (newMethods[index] as any).preview = URL.createObjectURL(file);
+    newMethods[index].file = file;
+    newMethods[index].preview = URL.createObjectURL(file);
     setForm({ ...form, paymentMethods: newMethods });
   };
 
   const handleSave = () => {
-    const data: any = {
+    const data: Record<string, File | string | null> = {
       logo_text: form.logoText,
       description: form.description,
       address: form.address,
       phone: form.phone,
       email: form.email,
+      facebook_url: form.facebookUrl,
+      youtube_url: form.youtubeUrl,
+      facebook_pixel_id: form.facebookPixelId,
       copyright: form.copyright,
       logo: logoFile,
       _method: "post",
@@ -101,8 +118,8 @@ export default function FooterSettingsPage() {
 
     // Prepare payment methods for multipart form data
     form.paymentMethods.forEach((method, index) => {
-      if ((method as any).file) {
-        data[`payment_methods[${index}][image]`] = (method as any).file;
+      if (method.file) {
+        data[`payment_methods[${index}][image]`] = method.file;
       }
       data[`payment_methods[${index}][name]`] = method.name;
       data[`payment_methods[${index}][image_path]`] = method.imagePath;
@@ -111,7 +128,7 @@ export default function FooterSettingsPage() {
     router.post("/footer-settings", data, {
       forceFormData: true,
       onSuccess: () => toast({ title: "Footer settings updated" }),
-      onError: (errs) => {
+      onError: (errs: Record<string, string>) => {
         const errorCount = Object.keys(errs).length;
         toast({ title: `Error updating settings (${errorCount} issues)`, variant: "destructive" });
       }
@@ -201,6 +218,42 @@ export default function FooterSettingsPage() {
               </div>
               {errors.address && <p className="text-xs font-medium text-destructive">{errors.address}</p>}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="facebookUrl">Facebook Page URL</Label>
+              <Input
+                id="facebookUrl"
+                placeholder="https://facebook.com/your-page"
+                value={form.facebookUrl}
+                onChange={(e) => setForm({ ...form, facebookUrl: e.target.value })}
+                className={errors.facebook_url ? "border-destructive" : ""}
+              />
+              {errors.facebook_url && <p className="text-xs font-medium text-destructive">{errors.facebook_url}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="youtubeUrl">YouTube Channel URL</Label>
+              <Input
+                id="youtubeUrl"
+                placeholder="https://youtube.com/@your-channel"
+                value={form.youtubeUrl}
+                onChange={(e) => setForm({ ...form, youtubeUrl: e.target.value })}
+                className={errors.youtube_url ? "border-destructive" : ""}
+              />
+              {errors.youtube_url && <p className="text-xs font-medium text-destructive">{errors.youtube_url}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="facebookPixelId">Facebook Pixel ID</Label>
+              <Input
+                id="facebookPixelId"
+                placeholder="123456789012345"
+                value={form.facebookPixelId}
+                onChange={(e) => setForm({ ...form, facebookPixelId: e.target.value })}
+                className={errors.facebook_pixel_id ? "border-destructive" : ""}
+              />
+              {errors.facebook_pixel_id && <p className="text-xs font-medium text-destructive">{errors.facebook_pixel_id}</p>}
+            </div>
           </CardContent>
         </Card>
 
@@ -279,8 +332,8 @@ export default function FooterSettingsPage() {
                     </Button>
                     
                     <div className="mb-3 flex h-12 w-full items-center justify-center rounded-lg bg-muted/20">
-                      {(method as any).preview || method.imagePath ? (
-                        <img src={(method as any).preview || method.imagePath} className="h-8 w-auto object-contain" />
+                      {method.preview || method.imagePath ? (
+                        <img src={method.preview || method.imagePath || undefined} className="h-8 w-auto object-contain" />
                       ) : (
                         <Globe className="h-6 w-6 text-muted-foreground/40" />
                       )}

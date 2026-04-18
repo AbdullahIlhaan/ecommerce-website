@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Search, Pencil, Trash2, FolderTree } from "lucide-react";
@@ -42,6 +42,9 @@ export default function CategoriesPage() {
           toast({ title: "Category updated" });
           setFormOpen(false);
         },
+        onError: (errors) => {
+          toast({ title: Object.values(errors)[0] || "Failed to update category", variant: "destructive" });
+        },
       });
       return;
     }
@@ -51,6 +54,9 @@ export default function CategoriesPage() {
       onSuccess: () => {
         toast({ title: "Category created" });
         setFormOpen(false);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to create category", variant: "destructive" });
       },
     });
   };
@@ -63,6 +69,9 @@ export default function CategoriesPage() {
       onSuccess: () => {
         toast({ title: "Category deleted" });
         setDeleteId(null);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to delete category", variant: "destructive" });
       },
     });
   };
@@ -122,7 +131,12 @@ export default function CategoriesPage() {
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>{editing ? "Edit Category" : "New Category"}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit Category" : "New Category"}</DialogTitle>
+            <DialogDescription>
+              Enter a category name, slug, and optional parent category.
+            </DialogDescription>
+          </DialogHeader>
           <div className="grid gap-4 py-2">
             <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')})} /></div>
             <div><Label>Slug *</Label><Input value={form.slug} onChange={e => setForm({...form, slug: e.target.value})} className="font-mono" /></div>

@@ -8,11 +8,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Search, Pencil, Trash2, ImagePlus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+
+const REQUIRED_BANNER_WIDTH = 2000;
+const REQUIRED_BANNER_HEIGHT = 720;
+const REQUIRED_BANNER_MIME = "image/webp";
 
 type HeroBannerForm = {
   sortOrder: string;
@@ -65,9 +69,62 @@ export default function HeroBannersPage() {
     setFormOpen(true);
   };
 
+  const readImageDimensions = (file: File) =>
+    new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new Image();
+
+      image.onload = () => {
+        resolve({ width: image.naturalWidth, height: image.naturalHeight });
+        URL.revokeObjectURL(objectUrl);
+      };
+
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error(`Unable to read image dimensions for ${file.name}`));
+      };
+
+      image.src = objectUrl;
+    });
+
   const handleImageChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
+
+    for (const file of files) {
+      const extension = file.name.split(".").pop()?.toLowerCase();
+
+      if (file.type !== REQUIRED_BANNER_MIME || extension !== "webp") {
+        event.target.value = "";
+        toast({
+          title: "Only .webp banner images are allowed",
+          description: `Upload ${REQUIRED_BANNER_WIDTH} x ${REQUIRED_BANNER_HEIGHT} .webp images only.`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        const { width, height } = await readImageDimensions(file);
+
+        if (width !== REQUIRED_BANNER_WIDTH || height !== REQUIRED_BANNER_HEIGHT) {
+          event.target.value = "";
+          toast({
+            title: "Invalid banner resolution",
+            description: `Banner images must be exactly ${REQUIRED_BANNER_WIDTH} x ${REQUIRED_BANNER_HEIGHT} pixels.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      } catch (error) {
+        event.target.value = "";
+        toast({
+          title: error instanceof Error ? error.message : "Unable to validate banner image",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
 
     // Revoke old object URLs to avoid memory leaks
     form.imagePreviews.forEach(preview => {
@@ -123,6 +180,9 @@ export default function HeroBannersPage() {
         setFormOpen(false);
         resetForm();
       },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to save hero banner", variant: "destructive" });
+      },
     });
   };
 
@@ -134,6 +194,9 @@ export default function HeroBannersPage() {
       onSuccess: () => {
         toast({ title: "Hero banner deleted" });
         setDeleteId(null);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to delete hero banner", variant: "destructive" });
       },
     });
   };
@@ -215,6 +278,9 @@ export default function HeroBannersPage() {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Hero Banner" : "New Hero Banner"}</DialogTitle>
+            <DialogDescription>
+              Upload banner images, then set homepage visibility and display order.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 overflow-y-auto px-1 py-4" style={{ maxHeight: "calc(90vh - 120px)" }}>
@@ -231,7 +297,10 @@ export default function HeroBannersPage() {
             </div>
             <div>
               <Label htmlFor="banner-images">Banner Images {editing ? "" : "*"}</Label>
-              <Input id="banner-images" type="file" accept="image/*" multiple onChange={handleImageChange} className="cursor-pointer" />
+              <Input id="banner-images" type="file" accept=".webp,image/webp" multiple onChange={handleImageChange} className="cursor-pointer" />
+              <p className="mt-2 text-xs font-semibold text-destructive">
+                Required: exact {REQUIRED_BANNER_WIDTH} x {REQUIRED_BANNER_HEIGHT}px resolution and `.webp` format only.
+              </p>
             </div>
             {form.imagePreviews.length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2">

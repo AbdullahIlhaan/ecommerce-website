@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Search, Eye, ShoppingCart, FileText } from "lucide-react";
@@ -63,6 +63,9 @@ export default function OrdersPage() {
       onSuccess: () => {
         toast({ title: "Order updated" });
         setEditStatusOrder(null);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to update order", variant: "destructive" });
       },
     });
   };
@@ -170,6 +173,9 @@ export default function OrdersPage() {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{viewOrder ? `${getInvoiceNumber(viewOrder)} (${getOrderReference(viewOrder)})` : "Order"}</DialogTitle>
+            <DialogDescription>
+              Review line items, totals, customer info, and payment summary for this order.
+            </DialogDescription>
           </DialogHeader>
           {viewOrder && (
             <div className="space-y-4">
@@ -208,7 +214,12 @@ export default function OrdersPage() {
       {/* Update Status */}
       <Dialog open={!!editStatusOrder} onOpenChange={() => setEditStatusOrder(null)}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>Update Order Status</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Update Order Status</DialogTitle>
+            <DialogDescription>
+              Change fulfillment and payment states for the selected order.
+            </DialogDescription>
+          </DialogHeader>
           <div className="grid gap-4 py-2">
             <div>
               <Label>Order Status</Label>

@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,6 +114,9 @@ export default function ProductsPage() {
         toast({ title: editing ? "Product updated" : "Product created" });
         setFormOpen(false);
       },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to save product", variant: "destructive" });
+      },
     });
   };
 
@@ -125,6 +128,9 @@ export default function ProductsPage() {
       onSuccess: () => {
         toast({ title: "Product deleted" });
         setDeleteId(null);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to delete product", variant: "destructive" });
       },
     });
   };
@@ -251,6 +257,9 @@ export default function ProductsPage() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit Product" : "New Product"}</DialogTitle>
+            <DialogDescription>
+              Configure product identity, pricing, stock, categorization, and gallery images.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-4 md:grid-cols-2">

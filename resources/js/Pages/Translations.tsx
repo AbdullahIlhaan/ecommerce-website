@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 
 type TranslationRecord = {
@@ -121,6 +121,9 @@ function TranslationsPage() {
           toast({ title: "Translation updated" });
           setFormOpen(false);
         },
+        onError: (errors) => {
+          toast({ title: Object.values(errors)[0] || "Failed to update translation", variant: "destructive" });
+        },
       });
 
       return;
@@ -131,6 +134,9 @@ function TranslationsPage() {
       onSuccess: () => {
         toast({ title: "Translation created" });
         setFormOpen(false);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to create translation", variant: "destructive" });
       },
     });
   };
@@ -145,6 +151,9 @@ function TranslationsPage() {
       onSuccess: () => {
         toast({ title: "Translation deleted" });
         setDeleteId(null);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to delete translation", variant: "destructive" });
       },
     });
   };
@@ -320,6 +329,9 @@ function TranslationsPage() {
           <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
               <DialogTitle>{editing ? "Edit Translation" : "Create Translation"}</DialogTitle>
+              <DialogDescription>
+                Update translation key metadata, localized copy, notes, and activation state.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-2">
               <div className="grid gap-4 md:grid-cols-2">

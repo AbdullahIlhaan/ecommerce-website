@@ -111,7 +111,7 @@ export default function ProductShow({ product, relatedProducts }: { product: Pro
               <span>SKU: <span className="text-foreground font-mono">{product.sku}</span></span>
               <span>•</span>
               <span className={product.stock > 0 ? "text-success font-medium" : "text-destructive font-medium"}>
-                {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                {product.stock > 0 ? `In Stock (Qty: ${product.stock})` : "Out of Stock"}
               </span>
             </div>
           </div>
@@ -140,11 +140,16 @@ export default function ProductShow({ product, relatedProducts }: { product: Pro
                 <input 
                   type="number" 
                   value={quantity} 
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                  min={1}
+                  max={Math.max(1, product.stock)}
+                  onChange={(e) => {
+                    const next = parseInt(e.target.value, 10) || 1;
+                    setQuantity(Math.min(Math.max(1, next), Math.max(1, product.stock)));
+                  }}
                   className="w-16 border-0 bg-transparent text-center font-bold focus:ring-0" 
                 />
                 <button 
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(Math.min(Math.max(1, product.stock), quantity + 1))}
                   className="flex h-full w-12 items-center justify-center text-xl transition hover:bg-muted"
                 >
                   +

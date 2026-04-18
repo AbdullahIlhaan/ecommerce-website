@@ -27,6 +27,7 @@ import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 import { ProductCard, type ProductProps } from "@/components/shared/ProductCard";
 import { StorefrontLayout } from "@/components/layout/StorefrontLayout";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocalization } from "@/hooks/use-localization";
 
 type HomeCategory = {
@@ -51,6 +52,18 @@ type HomeHeroBanner = {
   createdAt?: string | null;
 };
 
+type HomeFlashDeal = {
+  id: string;
+  name: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  isActive: boolean;
+  status: "scheduled" | "running" | "ended" | "disabled";
+  productIds: string[];
+  products: ProductProps[];
+  createdAt?: string | null;
+};
+
 function BrandLogo() {
   return (
     <Link href="/" className="inline-flex items-center gap-3">
@@ -69,12 +82,14 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [flashNow, setFlashNow] = useState(() => Date.now());
   const { t } = useLocalization();
 
-  const { auth, categories, heroBanners, latestProducts, flashSaleProducts, trendingProducts, brands } = usePage<{
+  const { auth, categories, heroBanners, flashDeal, latestProducts, flashSaleProducts, trendingProducts, brands } = usePage<{
     auth: { user: AuthUser | null };
     categories?: HomeCategory[];
     heroBanners?: HomeHeroBanner[];
+    flashDeal?: HomeFlashDeal | null;
     latestProducts?: ProductProps[];
     flashSaleProducts?: ProductProps[];
     trendingProducts?: ProductProps[];
@@ -171,13 +186,46 @@ export default function Home() {
     }
   }, [activeSlide, slides.length]);
 
+  useEffect(() => {
+    if (!flashDeal?.endsAt) return undefined;
+
+    const interval = window.setInterval(() => {
+      setFlashNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [flashDeal?.endsAt]);
+
+  const flashCountdown = useMemo(() => {
+    if (!flashDeal?.endsAt) {
+      return [
+        { l: t("home.countdown_hours", "H"), v: "--" },
+        { l: t("home.countdown_minutes", "M"), v: "--" },
+        { l: t("home.countdown_seconds", "S"), v: "--" },
+      ];
+    }
+
+    const distance = new Date(flashDeal.endsAt).getTime() - flashNow;
+    const safeDistance = Math.max(distance, 0);
+    const totalSeconds = Math.floor(safeDistance / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    return [
+      { l: t("home.countdown_hours", "H"), v: String(hours).padStart(2, "0") },
+      { l: t("home.countdown_minutes", "M"), v: String(minutes).padStart(2, "0") },
+      { l: t("home.countdown_seconds", "S"), v: String(seconds).padStart(2, "0") },
+    ];
+  }, [flashDeal?.endsAt, flashNow, t]);
+
   return (
     <StorefrontLayout title="Home">
       {/* Hero Section */}
       <section className="space-y-5">
-        <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="relative hidden xl:block">
-              <div className="h-full overflow-hidden rounded-[8px] border border-border bg-card shadow-[0_22px_60px_-36px_rgba(15,23,42,0.25)]">
+        <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-stretch">
+          <aside className="relative hidden xl:block xl:h-[420px]">
+              <div className="flex h-full flex-col overflow-hidden rounded-[8px] border border-border bg-card shadow-[0_22px_60px_-36px_rgba(15,23,42,0.25)]">
               <div className="flex items-center justify-between bg-primary px-5 py-3 text-white">
                 <div className="flex items-center gap-3">
                   <Menu className="h-5 w-5" />
@@ -188,78 +236,81 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="relative" onMouseLeave={() => setHoveredCategory(null)}>
-                <div className="flex flex-col">
-                  {nestedCategories.length > 0 ? nestedCategories.map((category) => (
-                    <div 
-                      key={category.id} 
-                      onMouseEnter={() => setHoveredCategory(category.id)}
-                      className="group relative"
-                    >
-                      <Link
-                        href={`/shop?category=${category.id}`}
-                        className={`interactive flex min-h-[52px] w-full items-center justify-between border-b border-border/70 px-5 py-0 text-left text-[14px] font-bold transition-all ${
-                          hoveredCategory === category.id 
-                          ? "bg-primary/5 text-primary pl-7" 
-                          : "text-foreground hover:bg-muted/50"
-                        }`}
+              <div className="relative flex-1" onMouseLeave={() => setHoveredCategory(null)}>
+                <ScrollArea className="h-full">
+                  <div className="flex flex-col">
+                    {nestedCategories.length > 0 ? nestedCategories.map((category) => (
+                      <div 
+                        key={category.id} 
+                        onMouseEnter={() => setHoveredCategory(category.id)}
+                        className="group relative"
                       >
-                        <span>{translateCategoryName(category)}</span>
-                        <ChevronRight className={`h-4 w-4 transition-transform ${hoveredCategory === category.id ? "translate-x-1" : ""}`} />
-                      </Link>
+                        <Link
+                          href={`/shop?category=${category.id}`}
+                          className={`interactive flex min-h-[52px] w-full items-center justify-between border-b border-border/70 px-5 py-0 text-left text-[14px] font-bold transition-all ${
+                            hoveredCategory === category.id 
+                            ? "bg-primary/5 pl-7 text-primary" 
+                            : "text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <span>{translateCategoryName(category)}</span>
+                          <ChevronRight className={`h-4 w-4 transition-transform ${hoveredCategory === category.id ? "translate-x-1" : ""}`} />
+                        </Link>
 
-                      {/* Mega Menu Panel */}
-                      {hoveredCategory === category.id && category.children && category.children.length > 0 && (
-                        <div className="absolute left-[318px] top-0 z-50 min-h-full w-[400px] animate-in fade-in slide-in-from-left-2 duration-200">
-                          <div className="ml-2 rounded-2xl border border-border bg-card p-6 shadow-2xl ring-1 ring-black/5">
-                              <div className="mb-4 flex items-center justify-between">
-                              <h4 className="text-lg font-black tracking-tight text-foreground">{translateCategoryName(category)}</h4>
-                              <Link href={`/shop?category=${category.id}`} className="text-xs font-bold text-primary hover:underline">
-                                {t("storefront.explore_all", "Explore All")}
-                              </Link>
-                            </div>
-                            <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-                              {category.children.map((child) => (
-                                <Link
-                                  key={child.id}
-                                  href={`/shop?category=${child.id}`}
-                                  className="group/item flex items-center gap-3 rounded-xl p-3 transition hover:bg-primary/5"
-                                >
-                                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50 group-hover/item:bg-primary/10 group-hover/item:text-primary transition-colors">
-                                    <ChevronRight className="h-4 w-4" />
-                                  </div>
-                                  <span className="text-sm font-bold text-muted-foreground group-hover/item:text-primary transition-colors">
-                                    {translateCategoryName(child)}
-                                  </span>
+                        {/* Mega Menu Panel */}
+                        {hoveredCategory === category.id && category.children && category.children.length > 0 && (
+                          <div className="absolute left-[318px] top-0 z-50 min-h-full w-[400px] animate-in fade-in slide-in-from-left-2 duration-200">
+                            <div className="ml-2 rounded-2xl border border-border bg-card p-6 shadow-2xl ring-1 ring-black/5">
+                                <div className="mb-4 flex items-center justify-between">
+                                <h4 className="text-lg font-black tracking-tight text-foreground">{translateCategoryName(category)}</h4>
+                                <Link href={`/shop?category=${category.id}`} className="text-xs font-bold text-primary hover:underline">
+                                  {t("storefront.explore_all", "Explore All")}
                                 </Link>
-                              ))}
-                            </div>
-                            
-                            {/* Promo area in mega menu */}
-                            <div className="mt-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent p-4">
-                               <p className="text-xs font-black uppercase tracking-widest text-primary">{t("common.limited_offer", "Limited Offer")}</p>
-                               <p className="mt-1 text-sm font-medium">{t("home.up_to_off", "Up to 40% off on :category", { category: translateCategoryName(category) })}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                                {category.children.map((child) => (
+                                  <Link
+                                    key={child.id}
+                                    href={`/shop?category=${child.id}`}
+                                    className="group/item flex items-center gap-3 rounded-xl p-3 transition hover:bg-primary/5"
+                                  >
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/50 transition-colors group-hover/item:bg-primary/10 group-hover/item:text-primary">
+                                      <ChevronRight className="h-4 w-4" />
+                                    </div>
+                                    <span className="text-sm font-bold text-muted-foreground transition-colors group-hover/item:text-primary">
+                                      {translateCategoryName(child)}
+                                    </span>
+                                  </Link>
+                                ))}
+                              </div>
+                              
+                              {/* Promo area in mega menu */}
+                              <div className="mt-6 rounded-xl bg-gradient-to-br from-primary/10 to-transparent p-4">
+                                 <p className="text-xs font-black uppercase tracking-widest text-primary">{t("common.limited_offer", "Limited Offer")}</p>
+                                 <p className="mt-1 text-sm font-medium">{t("home.up_to_off", "Up to 40% off on :category", { category: translateCategoryName(category) })}</p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  )) : (
-                    <div className="px-5 py-4 text-[15px] text-muted-foreground">{t("common.no_categories", "No categories available.")}</div>
-                  )}
-                </div>
+                        )}
+                      </div>
+                    )) : (
+                      <div className="px-5 py-4 text-[15px] text-muted-foreground">{t("common.no_categories", "No categories available.")}</div>
+                    )}
+                  </div>
+                </ScrollArea>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-card via-card/85 to-transparent" />
               </div>
             </div>
           </aside>
           
           {/*Hero Banner */}
           <div className="space-y-5">
-            <div className="overflow-hidden rounded-[8px] border border-border bg-card shadow-[0_24px_60px_-36px_rgba(15,23,42,0.26)]">
+            <div className="overflow-hidden rounded-[8px] border border-border bg-card shadow-[0_24px_60px_-36px_rgba(15,23,42,0.26)] xl:h-[420px]">
               {slides.length > 0 ? (
-                <div className="relative">
-                  <div className="overflow-hidden">
+                <div className="relative h-full">
+                  <div className="h-full overflow-hidden">
                     <div
-                      className="flex transition-transform duration-500 ease-out"
+                      className="flex h-full transition-transform duration-500 ease-out"
                       style={{ transform: `translateX(-${activeSlide * 100}%)` }}
                     >
                       {slides.map((slide) => (
@@ -268,7 +319,7 @@ export default function Home() {
                             <img
                               src={slide.imagePath}
                               alt={slide.title}
-                              className="h-auto w-full object-cover"
+                              className="aspect-[25/9] w-full object-cover xl:h-[420px] xl:aspect-auto"
                             />
                           </Link>
                         </div>
@@ -362,7 +413,7 @@ export default function Home() {
       )}
 
       {/* Flash Sale Section */}
-      {flashSaleProducts && flashSaleProducts.length > 0 && (
+      {flashDeal && flashDeal.status === "running" && flashSaleProducts && flashSaleProducts.length > 0 && (
         <section className="mt-12 sm:mt-20 overflow-hidden rounded-[24px] sm:rounded-[40px] bg-gradient-to-br from-[#a12863] to-[#f26522] p-6 sm:p-12 text-white">
           <div className="mb-8 sm:mb-10 flex flex-col items-center justify-between gap-6 md:flex-row">
               <div className="space-y-2 text-center md:text-left">
@@ -375,7 +426,7 @@ export default function Home() {
             </div>
             
             <div className="flex gap-2 sm:gap-4">
-              {[ { l: t("home.countdown_hours", "H"), v: '02' }, { l: t("home.countdown_minutes", "M"), v: '45' }, { l: t("home.countdown_seconds", "S"), v: '18' } ].map((item, idx) => (
+              {flashCountdown.map((item, idx) => (
                 <div key={idx} className="flex flex-col items-center">
                   <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-white/10 text-lg sm:text-2xl font-black backdrop-blur-xl border border-white/20">
                     {item.v}

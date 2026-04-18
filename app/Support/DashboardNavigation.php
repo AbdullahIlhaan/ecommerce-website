@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardNavigation
 {
@@ -58,6 +59,7 @@ class DashboardNavigation
                     self::item('Products', 'products.index', 'Package', [UserRole::SuperAdmin, UserRole::Admin]),
                     self::item('Categories', 'categories.index', 'FolderTree', [UserRole::SuperAdmin, UserRole::Admin]),
                     self::item('Hero Banners', 'hero-banners.index', 'Images', [UserRole::SuperAdmin, UserRole::Admin]),
+                    ...self::flashDealItems(),
                     self::item('Brands', 'brands.index', 'Award', [UserRole::SuperAdmin, UserRole::Admin]),
                 ],
             ],
@@ -81,7 +83,7 @@ class DashboardNavigation
                 'label' => 'Settings',
                 'items' => [
                     self::item('Footer Settings', 'footer-settings.index', 'Settings', [UserRole::SuperAdmin, UserRole::Admin]),
-                    self::item('Translations', 'translations.index', 'Languages', [UserRole::SuperAdmin, UserRole::Admin]),
+                    ...self::translationItems(),
                 ],
             ],
         ]);
@@ -99,6 +101,34 @@ class DashboardNavigation
             'icon' => $icon,
             'roles' => $roles,
             'exact' => $exact,
+        ];
+    }
+
+    /**
+     * @return array<int, array{title: string, url: string, icon: string, roles: array<int, UserRole|string>, exact: bool}>
+     */
+    private static function translationItems(): array
+    {
+        if (! Schema::hasTable('translations')) {
+            return [];
+        }
+
+        return [
+            self::item('Translations', 'translations.index', 'Languages', [UserRole::SuperAdmin, UserRole::Admin]),
+        ];
+    }
+
+    /**
+     * @return array<int, array{title: string, url: string, icon: string, roles: array<int, UserRole|string>, exact: bool}>
+     */
+    private static function flashDealItems(): array
+    {
+        if (! Schema::hasTable('flash_deals')) {
+            return [];
+        }
+
+        return [
+            self::item('Flash Deals', 'flash-deals.index', 'Zap', [UserRole::SuperAdmin, UserRole::Admin]),
         ];
     }
 }

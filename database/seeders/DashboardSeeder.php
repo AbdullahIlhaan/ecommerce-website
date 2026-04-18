@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Customer;
+use App\Models\FlashDeal;
 use App\Models\HeroBanner;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -23,6 +24,7 @@ class DashboardSeeder extends Seeder
             ['id' => 'cat3', 'name' => 'Smartphones', 'slug' => 'smartphones', 'parent_id' => 'cat1', 'created_at' => '2024-01-16 00:00:00', 'updated_at' => '2024-01-16 00:00:00'],
             ['id' => 'cat4', 'name' => 'Laptops', 'slug' => 'laptops', 'parent_id' => 'cat1', 'created_at' => '2024-01-16 00:00:00', 'updated_at' => '2024-01-16 00:00:00'],
             ['id' => 'cat5', 'name' => 'Men\'s Wear', 'slug' => 'mens-wear', 'parent_id' => 'cat2', 'created_at' => '2024-01-17 00:00:00', 'updated_at' => '2024-01-17 00:00:00'],
+            ['id' => 'cat6', 'name' => 'Smart Home', 'slug' => 'smart-home', 'parent_id' => 'cat1', 'created_at' => '2024-01-18 00:00:00', 'updated_at' => '2024-01-18 00:00:00'],
         ]);
 
         Brand::query()->insert([
@@ -30,6 +32,7 @@ class DashboardSeeder extends Seeder
             ['id' => 'br2', 'name' => 'Samsung', 'slug' => 'samsung', 'created_at' => '2024-01-10 00:00:00', 'updated_at' => '2024-01-10 00:00:00'],
             ['id' => 'br3', 'name' => 'Nike', 'slug' => 'nike', 'created_at' => '2024-01-10 00:00:00', 'updated_at' => '2024-01-10 00:00:00'],
             ['id' => 'br4', 'name' => 'Sony', 'slug' => 'sony', 'created_at' => '2024-01-11 00:00:00', 'updated_at' => '2024-01-11 00:00:00'],
+            ['id' => 'br5', 'name' => 'Xiaomi', 'slug' => 'xiaomi', 'created_at' => '2024-01-12 00:00:00', 'updated_at' => '2024-01-12 00:00:00'],
         ]);
 
         Product::query()->insert([
@@ -39,6 +42,7 @@ class DashboardSeeder extends Seeder
             ['id' => 'p4', 'name' => 'Air Jordan 1', 'sku' => 'NK-AJ1', 'description' => 'Classic basketball shoe', 'price' => 180, 'sale_price' => null, 'stock' => 120, 'status' => 'active', 'category_id' => 'cat5', 'brand_id' => 'br3', 'images' => json_encode([]), 'created_at' => '2024-02-15 00:00:00', 'updated_at' => '2024-02-15 00:00:00'],
             ['id' => 'p5', 'name' => 'Sony WH-1000XM5', 'sku' => 'SNY-WH5', 'description' => 'Noise cancelling headphones', 'price' => 349, 'sale_price' => 299, 'stock' => 67, 'status' => 'active', 'category_id' => 'cat1', 'brand_id' => 'br4', 'images' => json_encode([]), 'created_at' => '2024-02-20 00:00:00', 'updated_at' => '2024-02-20 00:00:00'],
             ['id' => 'p6', 'name' => 'iPad Air M2', 'sku' => 'APL-IPAM2', 'description' => 'Versatile tablet', 'price' => 599, 'sale_price' => null, 'stock' => 0, 'status' => 'draft', 'category_id' => 'cat1', 'brand_id' => 'br1', 'images' => json_encode([]), 'created_at' => '2024-03-01 00:00:00', 'updated_at' => '2024-03-01 00:00:00'],
+            ['id' => 'p7', 'name' => 'Xiaomi Smart Air Purifier 4', 'sku' => 'XMI-AP4', 'description' => 'HEPA air purifier with app control for smart homes.', 'price' => 299, 'sale_price' => 269, 'stock' => 54, 'status' => 'active', 'category_id' => 'cat6', 'brand_id' => 'br5', 'images' => json_encode([]), 'created_at' => '2024-03-03 00:00:00', 'updated_at' => '2024-03-03 00:00:00'],
         ]);
 
         Customer::query()->insert([
@@ -90,6 +94,21 @@ class DashboardSeeder extends Seeder
                 'created_at' => '2024-03-14 00:00:00',
                 'updated_at' => '2024-03-14 00:00:00',
             ],
+        ]);
+
+        $flashDeal = FlashDeal::query()->create([
+            'id' => 'fd1',
+            'name' => 'Homepage Launch Deal',
+            'starts_at' => now()->subDay(),
+            'ends_at' => now()->addDays(7),
+            'is_active' => true,
+        ]);
+
+        $flashDeal->products()->sync([
+            'p1' => ['sort_order' => 0],
+            'p3' => ['sort_order' => 1],
+            'p5' => ['sort_order' => 2],
+            'p7' => ['sort_order' => 3],
         ]);
     }
 }

@@ -83,6 +83,18 @@ export interface HeroBanner {
   createdAt: string;
 }
 
+export interface FlashDeal {
+  id: string;
+  name: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  isActive: boolean;
+  status: 'scheduled' | 'running' | 'ended' | 'disabled';
+  productIds: string[];
+  products: Product[];
+  createdAt: string | null;
+}
+
 export interface Customer {
   id: string;
   name: string;

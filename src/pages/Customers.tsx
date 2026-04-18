@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Search, Pencil, Trash2, Users } from "lucide-react";
@@ -39,6 +39,9 @@ export default function CustomersPage() {
           toast({ title: "Customer updated" });
           setFormOpen(false);
         },
+        onError: (errors) => {
+          toast({ title: Object.values(errors)[0] || "Failed to update customer", variant: "destructive" });
+        },
       });
       return;
     }
@@ -48,6 +51,9 @@ export default function CustomersPage() {
       onSuccess: () => {
         toast({ title: "Customer created" });
         setFormOpen(false);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to create customer", variant: "destructive" });
       },
     });
   };
@@ -60,6 +66,9 @@ export default function CustomersPage() {
       onSuccess: () => {
         toast({ title: "Customer deleted" });
         setDeleteId(null);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to delete customer", variant: "destructive" });
       },
     });
   };
@@ -119,7 +128,12 @@ export default function CustomersPage() {
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-lg">
-          <DialogHeader><DialogTitle>{editing ? "Edit Customer" : "New Customer"}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit Customer" : "New Customer"}</DialogTitle>
+            <DialogDescription>
+              Enter customer contact details and account status.
+            </DialogDescription>
+          </DialogHeader>
           <div className="grid gap-4 py-2">
             <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
             <div><Label>Email *</Label><Input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>

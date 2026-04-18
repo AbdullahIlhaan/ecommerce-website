@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Search, Pencil, Trash2, Ticket } from "lucide-react";
@@ -46,6 +46,9 @@ export default function CouponsPage() {
           toast({ title: "Coupon updated" });
           setFormOpen(false);
         },
+        onError: (errors) => {
+          toast({ title: Object.values(errors)[0] || "Failed to update coupon", variant: "destructive" });
+        },
       });
       return;
     }
@@ -55,6 +58,9 @@ export default function CouponsPage() {
       onSuccess: () => {
         toast({ title: "Coupon created" });
         setFormOpen(false);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to create coupon", variant: "destructive" });
       },
     });
   };
@@ -67,6 +73,9 @@ export default function CouponsPage() {
       onSuccess: () => {
         toast({ title: "Coupon deleted" });
         setDeleteId(null);
+      },
+      onError: (errors) => {
+        toast({ title: Object.values(errors)[0] || "Failed to delete coupon", variant: "destructive" });
       },
     });
   };
@@ -132,7 +141,12 @@ export default function CouponsPage() {
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="sm:max-w-2xl">
-          <DialogHeader><DialogTitle>{editing ? "Edit Coupon" : "New Coupon"}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit Coupon" : "New Coupon"}</DialogTitle>
+            <DialogDescription>
+              Set coupon code, discount rules, validity window, usage limits, and status.
+            </DialogDescription>
+          </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-4 md:grid-cols-2">
               <div><Label>Code *</Label><Input value={form.code} onChange={e => setForm({...form, code: e.target.value})} className="font-mono uppercase" /></div>

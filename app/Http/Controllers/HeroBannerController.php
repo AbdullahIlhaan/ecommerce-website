@@ -12,6 +12,9 @@ use Inertia\Response;
 
 class HeroBannerController extends Controller
 {
+    private const BANNER_WIDTH = 2000;
+    private const BANNER_HEIGHT = 720;
+
     public function index(): Response
     {
         return Inertia::render('HeroBanners', [
@@ -51,7 +54,13 @@ class HeroBannerController extends Controller
             'sortOrder' => ['nullable', 'integer', 'min:0'],
             'isActive' => ['nullable', 'boolean'],
             'images' => [$heroBanner ? 'nullable' : 'required', 'array', 'min:1'],
-            'images.*' => ['image', 'max:8192'],
+            'images.*' => [
+                'required',
+                'file',
+                'mimes:webp',
+                'max:8192',
+                'dimensions:width='.self::BANNER_WIDTH.',height='.self::BANNER_HEIGHT,
+            ],
         ]);
 
         $imagePaths = $heroBanner?->image_paths ?: array_filter([$heroBanner?->image_path]);
