@@ -275,22 +275,23 @@ export default function HeroBannersPage() {
       </Card>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-h-[94svh] overflow-hidden p-0 sm:max-w-2xl">
+          <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
             <DialogTitle>{editing ? "Edit Hero Banner" : "New Hero Banner"}</DialogTitle>
             <DialogDescription>
               Upload banner images, then set homepage visibility and display order.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 overflow-y-auto px-1 py-4" style={{ maxHeight: "calc(90vh - 120px)" }}>
+          <div className="overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="grid gap-4 pb-1">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="banner-sort">Sort Order</Label>
                 <Input id="banner-sort" type="number" min="0" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} />
                 <p className="mt-1 text-xs text-muted-foreground">Lower numbers appear first in the slideshow.</p>
               </div>
-              <div className="flex items-center gap-3 pt-6">
+              <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/20 px-4 py-3 md:mt-6">
                 <Switch id="banner-active" checked={form.isActive} onCheckedChange={(checked) => setForm({ ...form, isActive: checked })} />
                 <Label htmlFor="banner-active" className="cursor-pointer">Active on homepage</Label>
               </div>
@@ -322,8 +323,9 @@ export default function HeroBannersPage() {
               </div>
             ) : null}
           </div>
+          </div>
 
-          <DialogFooter>
+          <DialogFooter className="border-t border-border px-4 py-4 sm:px-6">
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
             <Button onClick={handleSave}>{editing ? "Update" : "Create"}</Button>
           </DialogFooter>

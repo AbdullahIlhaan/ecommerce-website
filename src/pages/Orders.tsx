@@ -170,15 +170,16 @@ export default function OrdersPage() {
 
       {/* View Order */}
       <Dialog open={!!viewOrder} onOpenChange={() => setViewOrder(null)}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-h-[94svh] overflow-hidden p-0 sm:max-w-2xl">
+          <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
             <DialogTitle>{viewOrder ? `${getInvoiceNumber(viewOrder)} (${getOrderReference(viewOrder)})` : "Order"}</DialogTitle>
             <DialogDescription>
               Review line items, totals, customer info, and payment summary for this order.
             </DialogDescription>
           </DialogHeader>
           {viewOrder && (
-            <div className="space-y-4">
+            <div className="overflow-y-auto px-4 py-4 sm:px-6">
+            <div className="space-y-4 pb-1">
               <div className="grid gap-4 text-sm sm:grid-cols-2">
                 <div><span className="text-muted-foreground">Customer:</span> <span className="font-medium">{getCustomerName(viewOrder.customerId)}</span></div>
                 <div><span className="text-muted-foreground">Order Ref:</span> <span className="font-medium">{getOrderReference(viewOrder)}</span></div>
@@ -207,20 +208,22 @@ export default function OrdersPage() {
                 <div className="text-base font-bold">Total: BDT {viewOrder.total.toFixed(2)}</div>
               </div>
             </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
 
       {/* Update Status */}
       <Dialog open={!!editStatusOrder} onOpenChange={() => setEditStatusOrder(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="max-h-[94svh] overflow-hidden p-0 sm:max-w-lg">
+          <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
             <DialogTitle>Update Order Status</DialogTitle>
             <DialogDescription>
               Change fulfillment and payment states for the selected order.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
+          <div className="overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="grid gap-4 pb-1">
             <div>
               <Label>Order Status</Label>
               <Select value={newStatus} onValueChange={setNewStatus}>
@@ -240,7 +243,8 @@ export default function OrdersPage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          </div>
+          <DialogFooter className="border-t border-border px-4 py-4 sm:px-6">
             <Button variant="outline" onClick={() => setEditStatusOrder(null)}>Cancel</Button>
             <Button onClick={handleUpdateStatus}>Save</Button>
           </DialogFooter>

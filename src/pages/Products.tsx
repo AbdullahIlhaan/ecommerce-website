@@ -254,14 +254,15 @@ export default function ProductsPage() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-          <DialogHeader>
+        <DialogContent className="max-h-[94svh] overflow-hidden p-0 sm:max-w-3xl">
+          <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
             <DialogTitle>{editing ? "Edit Product" : "New Product"}</DialogTitle>
             <DialogDescription>
               Configure product identity, pricing, stock, categorization, and gallery images.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
+          <div className="overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="grid gap-4 pb-1">
             <div className="grid gap-4 md:grid-cols-2">
               <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
               <div><Label>SKU *</Label><Input value={form.sku} onChange={e => setForm({...form, sku: e.target.value})} className="font-mono" /></div>
@@ -339,7 +340,8 @@ export default function ProductsPage() {
               </div>
             </div>
           </div>
-          <DialogFooter>
+          </div>
+          <DialogFooter className="border-t border-border px-4 py-4 sm:px-6">
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
             <Button onClick={handleSave}>{editing ? "Update" : "Create"}</Button>
           </DialogFooter>

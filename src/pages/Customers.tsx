@@ -127,14 +127,15 @@ export default function CustomersPage() {
       </CardContent></Card>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="max-h-[94svh] overflow-hidden p-0 sm:max-w-lg">
+          <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
             <DialogTitle>{editing ? "Edit Customer" : "New Customer"}</DialogTitle>
             <DialogDescription>
               Enter customer contact details and account status.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
+          <div className="overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="grid gap-4 pb-1">
             <div><Label>Name *</Label><Input value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
             <div><Label>Email *</Label><Input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} /></div>
             <div><Label>Phone</Label><Input type="tel" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /></div>
@@ -150,7 +151,8 @@ export default function CustomersPage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          </div>
+          <DialogFooter className="border-t border-border px-4 py-4 sm:px-6">
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
             <Button onClick={handleSave}>{editing ? "Update" : "Create"}</Button>
           </DialogFooter>

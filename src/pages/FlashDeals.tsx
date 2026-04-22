@@ -217,21 +217,22 @@ export default function FlashDealsPage() {
       </Card>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-4xl">
-          <DialogHeader>
+        <DialogContent className="max-h-[94svh] overflow-hidden p-0 sm:max-w-4xl">
+          <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
             <DialogTitle>{editing ? "Edit Flash Deal" : "New Flash Deal"}</DialogTitle>
             <DialogDescription>
               Select the products to feature, define when the deal starts, and when it should stop showing on the homepage.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-5 py-2">
+          <div className="overflow-y-auto px-4 py-4 sm:px-6">
+            <div className="grid gap-5 pb-1">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="flash-deal-name">Deal Name *</Label>
                 <Input id="flash-deal-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Weekend Mega Deal" />
               </div>
-              <div className="flex items-center gap-3 pt-6">
+              <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/20 px-4 py-3 md:mt-6">
                 <Switch id="flash-deal-active" checked={form.isActive} onCheckedChange={(checked) => setForm({ ...form, isActive: checked })} />
                 <Label htmlFor="flash-deal-active" className="cursor-pointer">Available for homepage activation</Label>
               </div>
@@ -248,12 +249,12 @@ export default function FlashDealsPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)]">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.95fr)]">
               <div>
                 <Label>Select Products *</Label>
-                <div className="mt-2 max-h-[420px] overflow-y-auto rounded-2xl border border-border">
+                <div className="mt-2 max-h-[42svh] overflow-y-auto rounded-2xl border border-border bg-background sm:max-h-[420px]">
                   {products.map((product) => (
-                    <label key={product.id} className="flex cursor-pointer items-start gap-3 border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/30">
+                    <label key={product.id} className="flex cursor-pointer items-start gap-3 border-b border-border px-3 py-3 last:border-b-0 hover:bg-muted/30 sm:px-4">
                       <input
                         type="checkbox"
                         checked={form.productIds.includes(product.id)}
@@ -271,7 +272,7 @@ export default function FlashDealsPage() {
 
               <div>
                 <Label>Selected Order</Label>
-                <div className="mt-2 max-h-[420px] overflow-y-auto rounded-2xl border border-border bg-muted/20 p-3">
+                <div className="mt-2 max-h-[32svh] overflow-y-auto rounded-2xl border border-border bg-muted/20 p-3 sm:max-h-[420px]">
                   {selectedProducts.length > 0 ? (
                     <div className="space-y-2">
                       {selectedProducts.map((product, index) => (
@@ -287,9 +288,10 @@ export default function FlashDealsPage() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="border-t border-border px-4 py-4 sm:px-6">
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
             <Button onClick={handleSave}>{editing ? "Update" : "Create"}</Button>
           </DialogFooter>

@@ -140,14 +140,15 @@ export default function CouponsPage() {
       </CardContent></Card>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-h-[94svh] overflow-hidden p-0 sm:max-w-2xl">
+          <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
             <DialogTitle>{editing ? "Edit Coupon" : "New Coupon"}</DialogTitle>
             <DialogDescription>
               Set coupon code, discount rules, validity window, usage limits, and status.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
+          <div className="overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="grid gap-4 pb-1">
             <div className="grid gap-4 md:grid-cols-2">
               <div><Label>Code *</Label><Input value={form.code} onChange={e => setForm({...form, code: e.target.value})} className="font-mono uppercase" /></div>
               <div><Label>Type</Label>
@@ -173,7 +174,8 @@ export default function CouponsPage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          </div>
+          <DialogFooter className="border-t border-border px-4 py-4 sm:px-6">
             <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
             <Button onClick={handleSave}>{editing ? "Update" : "Create"}</Button>
           </DialogFooter>
