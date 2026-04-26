@@ -12,6 +12,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Review;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\URL;
 
 class DashboardData
 {
@@ -195,6 +196,7 @@ class DashboardData
             'status' => $order->status,
             'paymentStatus' => $order->payment_status,
             'paymentMethod' => $order->payment_method ?: 'cod',
+            'invoiceUrl' => URL::signedRoute('orders.invoice', ['order' => $order]),
             'createdAt' => $order->created_at?->toDateString(),
             'formattedDate' => $order->created_at?->format('F d, Y'),
         ];

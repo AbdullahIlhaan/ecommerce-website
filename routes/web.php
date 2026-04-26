@@ -93,7 +93,8 @@ Route::get('/', fn () => Inertia::render('Home', [
     'trendingProducts' => DashboardData::products(
         \App\Models\Product::query()
             ->where('status', 'active')
-            ->inRandomOrder() // Simple way to simulate trending for now
+            ->orderByDesc('stock')
+            ->latest()
             ->limit(10)
             ->get()
     ),

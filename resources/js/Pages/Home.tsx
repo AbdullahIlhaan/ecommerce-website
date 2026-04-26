@@ -143,7 +143,7 @@ export default function Home() {
   const primaryCtaLabel = auth.user ? (auth.user.canAccessAdminPanel ? "Open Dashboard" : "My Account") : "Sign In";
   const highlights = useMemo(() => [
     {
-      title: t("home.highlight_easy_title", "Easy to use test test test"),
+      title: t("home.highlight_easy_title", "Easy to Use"),
       description: t("home.highlight_easy_description", "Surf, select, and purchase. It's that easy to do cross border shopping now."),
       icon: ShoppingBag,
     },

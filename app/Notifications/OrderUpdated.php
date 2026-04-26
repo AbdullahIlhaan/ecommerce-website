@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 class OrderUpdated extends Notification implements ShouldQueue
 {
@@ -24,7 +25,7 @@ class OrderUpdated extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $viewUrl = route('account'); 
+        $viewUrl = URL::signedRoute('orders.invoice', ['order' => $this->order]);
 
         return (new MailMessage)
                     ->subject('Order Status Update - #' . strtoupper(substr($this->order->id, 0, 8)))
@@ -38,7 +39,7 @@ class OrderUpdated extends Notification implements ShouldQueue
 
     public function toSms(object $notifiable): void
     {
-        $message = "Order Update: Your Order #" . strtoupper(substr($this->order->id, 0, 8)) . " is now " . strtoupper($this->order->status) . ". Check here: " . route('account');
+        $message = "Order Update: Your Order #" . strtoupper(substr($this->order->id, 0, 8)) . " is now " . strtoupper($this->order->status) . ". Check here: " . URL::signedRoute('orders.invoice', ['order' => $this->order]);
         
         // Placeholder for real SSLWireless / Infobip API
         Log::info("SMS notification to " . $this->order->customer->phone . ": " . $message);

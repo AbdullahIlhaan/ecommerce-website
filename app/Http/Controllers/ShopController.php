@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -27,7 +28,6 @@ class ShopController extends Controller
 
     protected const PAYMENT_METHODS = [
         'cod',
-        'online',
     ];
 
     public function index(Request $request): Response
@@ -309,6 +309,7 @@ class ShopController extends Controller
             'order' => $order ? [
                 'paymentMethod' => $order->payment_method ?: 'cod',
                 'paymentStatus' => $order->payment_status,
+                'invoiceUrl' => URL::signedRoute('orders.invoice', ['order' => $order]),
             ] : null,
         ]);
     }

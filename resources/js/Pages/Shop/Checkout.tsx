@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Link, router, usePage, Head } from "@inertiajs/react";
-import { formatPaymentMethod } from "@/lib/payments";
 import { resolveEffectivePrice } from "@/lib/pricing";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -88,7 +87,7 @@ type CheckoutFormData = {
   deliveryLocationLabel: string;
   deliveryLatitude: string;
   deliveryLongitude: string;
-  paymentMethod: "cod" | "online";
+  paymentMethod: "cod";
 };
 
 type LocationSuggestion = {
@@ -505,16 +504,13 @@ export default function Checkout() {
 
           <section className="space-y-6 rounded-3xl border border-border bg-card p-6 shadow-sm md:p-8">
             <div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary"><CreditCard className="h-5 w-5" /></div><h2 className="text-2xl font-black">Payment</h2></div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4">
               <button type="button" onClick={() => setFormData({ ...formData, paymentMethod: "cod" })} className={`flex items-center gap-4 rounded-2xl border-2 p-6 transition-all ${formData.paymentMethod === "cod" ? "border-primary bg-primary/5 shadow-md" : "border-border bg-muted/20 hover:border-primary/40"}`}>
                 <div className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${formData.paymentMethod === "cod" ? "border-primary bg-primary" : "border-muted-foreground"}`}>{formData.paymentMethod === "cod" && <div className="h-2 w-2 rounded-full bg-white" />}</div>
                 <div className="text-left"><div className="font-bold text-sm">Cash on Delivery</div><div className="text-[10px] text-muted-foreground">Pay when you receive</div></div>
               </button>
-              <button type="button" onClick={() => setFormData({ ...formData, paymentMethod: "online" })} className={`flex items-center gap-4 rounded-2xl border-2 p-6 transition-all ${formData.paymentMethod === "online" ? "border-primary bg-primary/5 shadow-md" : "border-border bg-muted/20 hover:border-primary/40"}`}>
-                <div className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${formData.paymentMethod === "online" ? "border-primary bg-primary" : "border-muted-foreground"}`}>{formData.paymentMethod === "online" && <div className="h-2 w-2 rounded-full bg-white" />}</div>
-                <div className="text-left"><div className="font-bold text-sm">Online Payment</div><div className="text-[10px] text-muted-foreground">bKash, Cards etc.</div></div>
-              </button>
             </div>
+            <p className="text-xs text-muted-foreground">Online payment will remain hidden until a verified gateway flow is connected.</p>
             {errors.paymentMethod && <p className="text-xs font-medium text-destructive">{errors.paymentMethod}</p>}
           </section>
         </div>

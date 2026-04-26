@@ -128,7 +128,6 @@ class PhoneAuthController extends Controller
             'context' => $context,
             'user_id' => $user->id,
             'phone' => $user->phone,
-            'code' => $plainCode,
         ]);
 
         return app()->environment('local')

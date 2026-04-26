@@ -151,7 +151,7 @@ function Account() {
                             </TableCell>
                             <TableCell className="text-right">
                               <Link 
-                                href={`/orders/${order.id}/invoice`}
+                                href={order.invoiceUrl || `/orders/${order.id}/invoice`}
                                 className="inline-flex h-9 items-center gap-2 rounded-lg bg-card border border-border px-3 text-xs font-bold transition hover:bg-muted"
                                 target="_blank"
                               >

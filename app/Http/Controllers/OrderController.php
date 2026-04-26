@@ -40,6 +40,19 @@ class OrderController extends Controller
 
     public function invoice(Order $order): Response
     {
+        $user = request()->user();
+        $customer = $order->customer;
+
+        $canView = request()->hasValidSignature()
+            || ($user !== null && $user->canAccessAdminPanel())
+            || (
+                $user !== null
+                && $customer !== null
+                && ($customer->user_id === $user->id || $customer->email === $user->email)
+            );
+
+        abort_unless($canView, 403);
+
         return Inertia::render('Shop/Invoice', [
             'order' => DashboardData::order($order->load(['customer', 'items'])),
         ]);

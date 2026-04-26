@@ -14,6 +14,7 @@ import { formatPaymentMethod } from "@/lib/payments";
 type CheckoutSuccessOrder = {
   paymentMethod: string;
   paymentStatus: string;
+  invoiceUrl?: string;
 };
 
 export default function CheckoutSuccess({ orderId, order }: { orderId?: string; order?: CheckoutSuccessOrder | null }) {
@@ -73,8 +74,8 @@ export default function CheckoutSuccess({ orderId, order }: { orderId?: string; 
             </Button>
           </Link>
           
-          {orderId && (
-            <Link href={`/orders/${orderId}/invoice`} target="_blank">
+          {order?.invoiceUrl && (
+            <Link href={order.invoiceUrl} target="_blank">
               <Button variant="outline" size="lg" className="w-full sm:w-auto h-14 rounded-2xl px-8 border-border hover:bg-muted font-bold transition-all">
                 Download Invoice
                 <FileText className="ml-2 h-4 w-4" />

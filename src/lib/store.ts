@@ -107,6 +107,7 @@ export interface Customer {
 export interface Order {
   id: string;
   invoiceNumber?: string;
+  invoiceUrl?: string;
   customerId: string;
   items: OrderItem[];
   subtotal: number;

@@ -179,7 +179,7 @@ class CheckoutFlowTest extends TestCase
             'deliveryLocationLabel' => 'Mirpur DOHS, Dhaka',
             'deliveryLatitude' => 23.8223,
             'deliveryLongitude' => 90.3654,
-            'paymentMethod' => 'online',
+            'paymentMethod' => 'cod',
             'items' => [
                 [
                     'id' => $product->id,
@@ -200,7 +200,7 @@ class CheckoutFlowTest extends TestCase
         $order = Order::query()->latest()->with('items')->first();
 
         $this->assertNotNull($order);
-        $this->assertSame('online', $order->payment_method);
+        $this->assertSame('cod', $order->payment_method);
         $this->assertCount(1, $order->items);
         $this->assertSame(3, (int) $order->items->first()->quantity);
         $this->assertSame(17, $product->fresh()->stock);

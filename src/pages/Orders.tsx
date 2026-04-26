@@ -117,7 +117,7 @@ export default function OrdersPage() {
                     </div>
                     <div className="flex flex-col gap-2">
                       <Button variant="ghost" size="icon" onClick={() => setViewOrder(o)}><Eye className="h-4 w-4" /></Button>
-                      <Link href={`/orders/${o.id}/invoice`} target="_blank">
+                      <Link href={o.invoiceUrl || `/orders/${o.id}/invoice`} target="_blank">
                         <Button variant="ghost" size="icon" className="text-primary"><FileText className="h-4 w-4" /></Button>
                       </Link>
                       <Button variant="outline" size="sm" onClick={() => { setEditStatusOrder(o); setNewStatus(o.status); setNewPaymentStatus(o.paymentStatus); }}>Update</Button>
@@ -153,7 +153,7 @@ export default function OrdersPage() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button variant="ghost" size="icon" title="View Details" onClick={() => setViewOrder(o)}><Eye className="h-4 w-4" /></Button>
-                          <Link href={`/orders/${o.id}/invoice`} target="_blank">
+                          <Link href={o.invoiceUrl || `/orders/${o.id}/invoice`} target="_blank">
                             <Button variant="ghost" size="icon" title="View Invoice" className="text-primary"><FileText className="h-4 w-4" /></Button>
                           </Link>
                           <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setEditStatusOrder(o); setNewStatus(o.status); setNewPaymentStatus(o.paymentStatus); }}>Update</Button>
