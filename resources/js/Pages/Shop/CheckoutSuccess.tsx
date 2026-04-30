@@ -20,6 +20,30 @@ type CheckoutSuccessOrder = {
 export default function CheckoutSuccess({ orderId, order }: { orderId?: string; order?: CheckoutSuccessOrder | null }) {
   const displayOrderNumber = orderId ? `#${orderId.slice(0, 8).toUpperCase()}` : "FBD-" + Math.floor(100000 + Math.random() * 900000);
 
+  const handleShare = async () => {
+    const shareUrl = order?.invoiceUrl || window.location.href;
+    const sharePayload = {
+      title: "Future-BD Order Confirmation",
+      text: `My order ${displayOrderNumber} has been confirmed on Future-BD.`,
+      url: shareUrl,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(sharePayload);
+        return;
+      } catch {
+        return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      window.prompt("Copy this link", shareUrl);
+    }
+  };
+
   return (
     <StorefrontLayout title="Order Confirmed">
       <div className="flex flex-col items-center justify-center py-12 md:py-20">
@@ -83,14 +107,14 @@ export default function CheckoutSuccess({ orderId, order }: { orderId?: string; 
             </Link>
           )}
 
-          <Button variant="ghost" size="lg" className="w-full sm:w-auto h-14 rounded-2xl px-8 font-bold transition-all">
+          <Button variant="ghost" size="lg" className="w-full sm:w-auto h-14 rounded-2xl px-8 font-bold transition-all" onClick={handleShare}>
              Share Experience
              <Share2 className="ml-2 h-4 w-4" />
           </Button>
         </div>
 
         <div className="mt-20 border-t border-border pt-10 text-center">
-           <p className="text-sm font-bold text-muted-foreground">Need help? <Link href="#" className="text-primary underline">Contact Our Support</Link></p>
+           <p className="text-sm font-bold text-muted-foreground">Need help? <Link href="/support-center" className="text-primary underline">Contact Our Support</Link></p>
         </div>
       </div>
     </StorefrontLayout>

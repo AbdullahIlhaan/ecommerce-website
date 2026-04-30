@@ -4,13 +4,13 @@ namespace App\Notifications;
 
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 
-class OrderUpdated extends Notification implements ShouldQueue
+class OrderUpdated extends Notification
 {
     use Queueable;
 
@@ -20,7 +20,7 @@ class OrderUpdated extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        return Schema::hasTable('notifications') ? ['mail', 'database'] : ['mail'];
     }
 
     public function toMail(object $notifiable): MailMessage

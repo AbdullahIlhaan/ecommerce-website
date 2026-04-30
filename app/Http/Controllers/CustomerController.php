@@ -14,8 +14,24 @@ class CustomerController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Customers', [
-            'customers' => DashboardData::customers(Customer::query()->orderBy('name')->get()),
+        return Inertia::render('Customers', $this->sharedProps());
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('Customers/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'create',
+            'customer' => null,
+        ]);
+    }
+
+    public function edit(Customer $customer): Response
+    {
+        return Inertia::render('Customers/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'edit',
+            'customer' => DashboardData::customers(collect([$customer]))[0],
         ]);
     }
 
@@ -48,5 +64,12 @@ class CustomerController extends Controller
             'phone' => ['nullable', 'string', 'max:255'],
             'status' => ['required', Rule::in(['active', 'inactive', 'blocked'])],
         ]);
+    }
+
+    private function sharedProps(): array
+    {
+        return [
+            'customers' => DashboardData::customers(Customer::query()->orderBy('name')->get()),
+        ];
     }
 }

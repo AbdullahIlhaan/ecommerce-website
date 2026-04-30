@@ -4,13 +4,16 @@ namespace App\Support;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\ContentPage;
 use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\FlashDeal;
 use App\Models\HeroBanner;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ReturnRequest;
 use App\Models\Review;
+use App\Models\StockMovement;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\URL;
 
@@ -85,6 +88,25 @@ class DashboardData
         ])->all();
     }
 
+    public static function contentPages(Collection $contentPages): array
+    {
+        return $contentPages->map(fn (ContentPage $contentPage) => self::contentPage($contentPage))->all();
+    }
+
+    public static function contentPage(ContentPage $contentPage): array
+    {
+        return [
+            'id' => $contentPage->id,
+            'title' => $contentPage->title,
+            'slug' => $contentPage->slug,
+            'summary' => $contentPage->summary ?? '',
+            'body' => $contentPage->body,
+            'isActive' => (bool) $contentPage->is_active,
+            'updatedAt' => $contentPage->updated_at?->toDateTimeString(),
+            'updatedAtLabel' => $contentPage->updated_at?->format('F Y'),
+        ];
+    }
+
     public static function coupons(Collection $coupons): array
     {
         return $coupons->map(fn (Coupon $coupon) => [
@@ -98,6 +120,53 @@ class DashboardData
             'usageCount' => $coupon->usage_count,
             'status' => $coupon->status,
             'createdAt' => $coupon->created_at?->toDateString(),
+        ])->all();
+    }
+
+    public static function returnRequests(Collection $returnRequests): array
+    {
+        return $returnRequests->map(fn (ReturnRequest $returnRequest) => self::returnRequest($returnRequest))->all();
+    }
+
+    public static function returnRequest(ReturnRequest $returnRequest): array
+    {
+        return [
+            'id' => $returnRequest->id,
+            'orderId' => $returnRequest->order_id,
+            'customerId' => $returnRequest->customer_id,
+            'customerName' => $returnRequest->customer?->name,
+            'customerEmail' => $returnRequest->customer?->email,
+            'orderReference' => $returnRequest->order?->invoice_number ?: $returnRequest->order?->buildInvoiceNumber(),
+            'type' => $returnRequest->type,
+            'status' => $returnRequest->status,
+            'refundAmount' => $returnRequest->refund_amount !== null ? (float) $returnRequest->refund_amount : null,
+            'restockItems' => (bool) $returnRequest->restock_items,
+            'reason' => $returnRequest->reason,
+            'details' => $returnRequest->details,
+            'resolutionNotes' => $returnRequest->resolution_notes,
+            'requestedAt' => $returnRequest->requested_at?->toDateTimeString(),
+            'reviewedAt' => $returnRequest->reviewed_at?->toDateTimeString(),
+            'createdAt' => $returnRequest->created_at?->toDateTimeString(),
+        ];
+    }
+
+    public static function stockMovements(Collection $stockMovements): array
+    {
+        return $stockMovements->map(fn (StockMovement $stockMovement) => [
+            'id' => $stockMovement->id,
+            'productId' => $stockMovement->product_id,
+            'productName' => $stockMovement->product?->name,
+            'productSku' => $stockMovement->product?->sku,
+            'orderId' => $stockMovement->order_id,
+            'returnRequestId' => $stockMovement->return_request_id,
+            'type' => $stockMovement->type,
+            'quantityChange' => $stockMovement->quantity_change,
+            'stockBefore' => $stockMovement->stock_before,
+            'stockAfter' => $stockMovement->stock_after,
+            'reference' => $stockMovement->reference,
+            'notes' => $stockMovement->notes,
+            'createdAt' => $stockMovement->created_at?->toDateTimeString(),
+            'createdAtLabel' => $stockMovement->created_at?->diffForHumans(),
         ])->all();
     }
 
@@ -196,7 +265,17 @@ class DashboardData
             'status' => $order->status,
             'paymentStatus' => $order->payment_status,
             'paymentMethod' => $order->payment_method ?: 'cod',
+            'shippingCarrier' => $order->shipping_carrier,
+            'trackingNumber' => $order->tracking_number,
+            'estimatedDeliveryAt' => $order->estimated_delivery_at?->toDateTimeString(),
+            'shippedAt' => $order->shipped_at?->toDateTimeString(),
+            'deliveredAt' => $order->delivered_at?->toDateTimeString(),
+            'internalNotes' => $order->internal_notes,
             'invoiceUrl' => URL::signedRoute('orders.invoice', ['order' => $order]),
+            'returnRequestUrl' => URL::signedRoute('return-requests.create', ['order' => $order]),
+            'hasOpenReturnRequest' => $order->relationLoaded('returnRequests')
+                ? $order->returnRequests->contains(fn (ReturnRequest $request) => in_array($request->status, ['pending', 'approved', 'received'], true))
+                : false,
             'createdAt' => $order->created_at?->toDateString(),
             'formattedDate' => $order->created_at?->format('F d, Y'),
         ];

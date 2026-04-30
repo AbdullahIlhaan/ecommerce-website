@@ -22,6 +22,12 @@ class Order extends Model
         'status',
         'payment_status',
         'payment_method',
+        'shipping_carrier',
+        'tracking_number',
+        'estimated_delivery_at',
+        'shipped_at',
+        'delivered_at',
+        'internal_notes',
         'delivery_zone',
         'delivery_charge',
         'delivery_city',
@@ -36,6 +42,9 @@ class Order extends Model
         'tax' => 'decimal:2',
         'total' => 'decimal:2',
         'delivery_charge' => 'decimal:2',
+        'estimated_delivery_at' => 'datetime',
+        'shipped_at' => 'datetime',
+        'delivered_at' => 'datetime',
         'delivery_latitude' => 'decimal:7',
         'delivery_longitude' => 'decimal:7',
     ];
@@ -59,6 +68,11 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function returnRequests(): HasMany
+    {
+        return $this->hasMany(ReturnRequest::class);
     }
 
     public function buildInvoiceNumber(): string

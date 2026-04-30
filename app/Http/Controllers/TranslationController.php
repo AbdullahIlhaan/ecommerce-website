@@ -14,12 +14,35 @@ class TranslationController extends Controller
 {
     public function index(): Response
     {
+        return Inertia::render('Translations', $this->sharedProps());
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('Translations/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'create',
+            'translation' => null,
+        ]);
+    }
+
+    public function edit(Translation $translation): Response
+    {
+        return Inertia::render('Translations/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'edit',
+            'translation' => $this->transformTranslations([$translation])[0],
+        ]);
+    }
+
+    private function sharedProps(): array
+    {
         if (! $this->translationsTableExists()) {
-            return Inertia::render('Translations', [
+            return [
                 'translations' => [],
                 'groups' => [],
                 'tableMissing' => true,
-            ]);
+            ];
         }
 
         $translations = Translation::query()
@@ -28,7 +51,7 @@ class TranslationController extends Controller
             ->orderBy('translation_key')
             ->get();
 
-        return Inertia::render('Translations', [
+        return [
             'translations' => $this->transformTranslations($translations),
             'groups' => $translations
                 ->pluck('group_name')
@@ -37,7 +60,7 @@ class TranslationController extends Controller
                 ->values()
                 ->all(),
             'tableMissing' => false,
-        ]);
+        ];
     }
 
     public function store(Request $request): RedirectResponse

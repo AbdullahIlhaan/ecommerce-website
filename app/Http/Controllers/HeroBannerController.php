@@ -17,8 +17,24 @@ class HeroBannerController extends Controller
 
     public function index(): Response
     {
-        return Inertia::render('HeroBanners', [
-            'heroBanners' => DashboardData::heroBanners(HeroBanner::query()->orderBy('sort_order')->latest()->get()),
+        return Inertia::render('HeroBanners', $this->sharedProps());
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('HeroBanners/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'create',
+            'heroBanner' => null,
+        ]);
+    }
+
+    public function edit(HeroBanner $heroBanner): Response
+    {
+        return Inertia::render('HeroBanners/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'edit',
+            'heroBanner' => DashboardData::heroBanner($heroBanner),
         ]);
     }
 
@@ -113,5 +129,12 @@ class HeroBannerController extends Controller
                 File::delete($absolutePath);
             }
         }
+    }
+
+    private function sharedProps(): array
+    {
+        return [
+            'heroBanners' => DashboardData::heroBanners(HeroBanner::query()->orderBy('sort_order')->latest()->get()),
+        ];
     }
 }

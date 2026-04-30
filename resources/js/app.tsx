@@ -22,6 +22,7 @@ if (typeof window !== "undefined") {
 }
 
 createInertiaApp({
+  title: (title) => (title ? `${title} | Future-BD` : "Future-BD"),
   resolve: async (name) => {
     const pages = import.meta.glob("./Pages/**/*.tsx");
     const page = await pages[`./Pages/${name}.tsx`]();

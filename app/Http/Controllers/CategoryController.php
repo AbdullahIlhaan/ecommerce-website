@@ -15,8 +15,24 @@ class CategoryController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Categories', [
-            'categories' => DashboardData::categories(Category::query()->orderBy('name')->get()),
+        return Inertia::render('Categories', $this->sharedProps());
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('Categories/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'create',
+            'category' => null,
+        ]);
+    }
+
+    public function edit(Category $category): Response
+    {
+        return Inertia::render('Categories/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'edit',
+            'category' => DashboardData::categories(collect([$category]))[0],
         ]);
     }
 
@@ -55,6 +71,13 @@ class CategoryController extends Controller
             'name' => $data['name'],
             'slug' => $data['slug'],
             'parent_id' => $data['parentId'] ?? null,
+        ];
+    }
+
+    private function sharedProps(): array
+    {
+        return [
+            'categories' => DashboardData::categories(Category::query()->orderBy('name')->get()),
         ];
     }
 }

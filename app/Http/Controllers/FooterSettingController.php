@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FooterSetting;
+use App\Support\DashboardData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -25,13 +26,20 @@ class FooterSettingController extends Controller
         ]);
 
         return Inertia::render('FooterSettings', [
-            'footerSetting' => $footerSetting,
+            'footerSetting' => DashboardData::footerSetting($footerSetting),
         ]);
     }
 
     public function update(Request $request): RedirectResponse
     {
         $footerSetting = FooterSetting::first() ?: new FooterSetting();
+        $socialLinks = $this->filterSocialLinks($request->input('social_links', []));
+        $paymentMethods = $this->filterPaymentMethods($request->input('payment_methods', []));
+
+        $request->merge([
+            'social_links' => $socialLinks,
+            'payment_methods' => $paymentMethods,
+        ]);
 
         $data = $request->validate([
             'logo_text' => ['nullable', 'string', 'max:255'],
@@ -60,32 +68,29 @@ class FooterSettingController extends Controller
             $footerSetting->logo_path = $this->storeFile($request->file('logo'), 'footer');
         }
 
-        $paymentMethods = $request->input('payment_methods', []);
-        
         // Handle payment method images
         if ($request->hasFile('payment_methods')) {
             foreach ($request->file('payment_methods') as $index => $fileData) {
-                if (isset($fileData['image'])) {
-                     // Delete old image if it exists in the original data
-                     $oldPath = $paymentMethods[$index]['image_path'] ?? null;
-                     if ($oldPath) {
-                         $this->deleteFile($oldPath);
-                     }
-                     $paymentMethods[$index]['image_path'] = $this->storeFile($fileData['image'], 'payments');
+                if (isset($fileData['image']) && isset($paymentMethods[$index])) {
+                    $oldPath = $paymentMethods[$index]['image_path'] ?? null;
+                    if ($oldPath) {
+                        $this->deleteFile($oldPath);
+                    }
+                    $paymentMethods[$index]['image_path'] = $this->storeFile($fileData['image'], 'payments');
                 }
             }
         }
 
         $footerSetting->fill([
-            'logo_text' => $data['logo_text'],
-            'description' => $data['description'],
-            'address' => $data['address'],
-            'phone' => $data['phone'],
-            'email' => $data['email'],
+            'logo_text' => $data['logo_text'] ?? null,
+            'description' => $data['description'] ?? null,
+            'address' => $data['address'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'email' => $data['email'] ?? null,
             'facebook_url' => $data['facebook_url'] ?? null,
             'youtube_url' => $data['youtube_url'] ?? null,
             'facebook_pixel_id' => $data['facebook_pixel_id'] ?? null,
-            'copyright' => $data['copyright'],
+            'copyright' => $data['copyright'] ?? null,
             'payment_methods' => $paymentMethods,
             'social_links' => $data['social_links'] ?? [],
         ]);
@@ -116,5 +121,47 @@ class FooterSettingController extends Controller
         if (File::exists($absolutePath)) {
             File::delete($absolutePath);
         }
+    }
+
+    private function filterSocialLinks(array $links): array
+    {
+        return array_values(array_filter(array_map(function ($link) {
+            if (! is_array($link)) {
+                return null;
+            }
+
+            $platform = trim((string) ($link['platform'] ?? ''));
+            $url = trim((string) ($link['url'] ?? ''));
+
+            if ($platform === '' && $url === '') {
+                return null;
+            }
+
+            return [
+                'platform' => $platform,
+                'url' => $url,
+            ];
+        }, $links)));
+    }
+
+    private function filterPaymentMethods(array $methods): array
+    {
+        return array_values(array_filter(array_map(function ($method) {
+            if (! is_array($method)) {
+                return null;
+            }
+
+            $name = trim((string) ($method['name'] ?? ''));
+            $imagePath = $method['image_path'] ?? null;
+
+            if ($name === '' && blank($imagePath)) {
+                return null;
+            }
+
+            return [
+                'name' => $name,
+                'image_path' => $imagePath,
+            ];
+        }, $methods)));
     }
 }

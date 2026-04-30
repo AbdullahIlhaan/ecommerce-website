@@ -10,12 +10,8 @@ import { ConfirmModal } from "@/components/shared/ConfirmModal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 
 type TranslationRecord = {
@@ -29,26 +25,6 @@ type TranslationRecord = {
   updatedAt: string | null;
 };
 
-type TranslationForm = {
-  key: string;
-  group: string;
-  englishText: string;
-  banglaText: string;
-  notes: string;
-  isActive: boolean;
-};
-
-function emptyForm(): TranslationForm {
-  return {
-    key: "",
-    group: "",
-    englishText: "",
-    banglaText: "",
-    notes: "",
-    isActive: true,
-  };
-}
-
 function TranslationsPage() {
   const { translations, groups } = usePage<{
     translations: TranslationRecord[];
@@ -58,10 +34,7 @@ function TranslationsPage() {
   const [search, setSearch] = useState("");
   const [groupFilter, setGroupFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [formOpen, setFormOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [editing, setEditing] = useState<TranslationRecord | null>(null);
-  const [form, setForm] = useState<TranslationForm>(emptyForm());
 
   const filtered = useMemo(() => translations.filter((translation) => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -79,67 +52,6 @@ function TranslationsPage() {
 
     return matchesSearch && matchesGroup && matchesStatus;
   }), [groupFilter, search, statusFilter, translations]);
-
-  const openCreate = () => {
-    setEditing(null);
-    setForm(emptyForm());
-    setFormOpen(true);
-  };
-
-  const openEdit = (translation: TranslationRecord) => {
-    setEditing(translation);
-    setForm({
-      key: translation.key,
-      group: translation.group || "",
-      englishText: translation.englishText,
-      banglaText: translation.banglaText,
-      notes: translation.notes || "",
-      isActive: translation.isActive,
-    });
-    setFormOpen(true);
-  };
-
-  const handleSave = () => {
-    if (!form.key.trim() || !form.englishText.trim()) {
-      toast({ title: "Key and English text are required", variant: "destructive" });
-      return;
-    }
-
-    const payload = {
-      key: form.key.trim(),
-      group: form.group.trim() || null,
-      englishText: form.englishText.trim(),
-      banglaText: form.banglaText.trim() || null,
-      notes: form.notes.trim() || null,
-      isActive: form.isActive,
-    };
-
-    if (editing) {
-      router.put(`/translations/${editing.id}`, payload, {
-        preserveScroll: true,
-        onSuccess: () => {
-          toast({ title: "Translation updated" });
-          setFormOpen(false);
-        },
-        onError: (errors) => {
-          toast({ title: Object.values(errors)[0] || "Failed to update translation", variant: "destructive" });
-        },
-      });
-
-      return;
-    }
-
-    router.post("/translations", payload, {
-      preserveScroll: true,
-      onSuccess: () => {
-        toast({ title: "Translation created" });
-        setFormOpen(false);
-      },
-      onError: (errors) => {
-        toast({ title: Object.values(errors)[0] || "Failed to create translation", variant: "destructive" });
-      },
-    });
-  };
 
   const handleDelete = () => {
     if (!deleteId) {
@@ -167,7 +79,7 @@ function TranslationsPage() {
           title="Translations"
           description="Manage manual English and Bangla interface copy for the storefront. Admins can update wording at any time without relying on machine translation."
           actionLabel="Add Translation"
-          onAction={openCreate}
+          onAction={() => router.get("/translations/create")}
         />
 
         <Card className="mb-6 border-primary/20 bg-primary/5">
@@ -235,7 +147,7 @@ function TranslationsPage() {
                 title="No translations found"
                 description="Add the first translation entry or adjust your filters."
                 actionLabel="Add Translation"
-                onAction={openCreate}
+                onAction={() => router.get("/translations/create")}
                 icon={<Languages className="h-8 w-8 text-muted-foreground" />}
               />
             ) : (
@@ -269,7 +181,7 @@ function TranslationsPage() {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(translation)}>
+                          <Button variant="ghost" size="icon" onClick={() => router.get(`/translations/${translation.id}/edit`)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(translation.id)}>
@@ -308,7 +220,7 @@ function TranslationsPage() {
                           </TableCell>
                           <TableCell>{translation.updatedAt || "-"}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="icon" onClick={() => openEdit(translation)}>
+                            <Button variant="ghost" size="icon" onClick={() => router.get(`/translations/${translation.id}/edit`)}>
                               <Pencil className="h-4 w-4" />
                             </Button>
                             <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(translation.id)}>
@@ -324,89 +236,6 @@ function TranslationsPage() {
             )}
           </CardContent>
         </Card>
-
-        <Dialog open={formOpen} onOpenChange={setFormOpen}>
-          <DialogContent className="sm:max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>{editing ? "Edit Translation" : "Create Translation"}</DialogTitle>
-              <DialogDescription>
-                Update translation key metadata, localized copy, notes, and activation state.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-2">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Translation Key</Label>
-                  <Input
-                    value={form.key}
-                    onChange={(event) => setForm({ ...form, key: event.target.value })}
-                    placeholder="storefront.header.support_center"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Use letters, numbers, dots, underscores, and hyphens only.
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Group</Label>
-                  <Input
-                    value={form.group}
-                    onChange={(event) => setForm({ ...form, group: event.target.value })}
-                    placeholder="storefront"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>English Text</Label>
-                <Textarea
-                  rows={3}
-                  value={form.englishText}
-                  onChange={(event) => setForm({ ...form, englishText: event.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Bangla Text</Label>
-                <Textarea
-                  rows={3}
-                  value={form.banglaText}
-                  onChange={(event) => setForm({ ...form, banglaText: event.target.value })}
-                  style={{ fontFamily: '"Hind Siliguri", system-ui, sans-serif' }}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Leave blank to fall back to the English copy.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Notes</Label>
-                <Textarea
-                  rows={2}
-                  value={form.notes}
-                  onChange={(event) => setForm({ ...form, notes: event.target.value })}
-                  placeholder="Optional context for admins and content editors."
-                />
-              </div>
-
-              <div className="flex items-center justify-between rounded-2xl border border-border bg-muted/20 px-4 py-3">
-                <div>
-                  <div className="font-semibold">Active translation</div>
-                  <div className="text-sm text-muted-foreground">
-                    Inactive entries stay in the dashboard but stop overriding storefront copy.
-                  </div>
-                </div>
-                <Switch
-                  checked={form.isActive}
-                  onCheckedChange={(checked) => setForm({ ...form, isActive: checked })}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setFormOpen(false)}>Cancel</Button>
-              <Button onClick={handleSave}>{editing ? "Update" : "Create"}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         <ConfirmModal
           open={!!deleteId}

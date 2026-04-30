@@ -6,6 +6,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Support\DashboardData;
+use App\Support\InventoryManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -18,10 +19,24 @@ class ProductController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Products', [
-            'products' => DashboardData::products(Product::query()->latest()->get()),
-            'categories' => DashboardData::categories(Category::query()->orderBy('name')->get()),
-            'brands' => DashboardData::brands(Brand::query()->orderBy('name')->get()),
+        return Inertia::render('Products', $this->sharedProps());
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('Products/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'create',
+            'product' => null,
+        ]);
+    }
+
+    public function edit(Product $product): Response
+    {
+        return Inertia::render('Products/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'edit',
+            'product' => DashboardData::products(collect([$product]))[0],
         ]);
     }
 
@@ -34,7 +49,25 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product): RedirectResponse
     {
-        $product->update($this->validated($request, $product->id));
+        $payload = $this->validated($request, $product->id);
+        $requestedStock = (int) $payload['stock'];
+        $stockChanged = $requestedStock !== (int) $product->stock;
+        $nonStockPayload = $payload;
+        unset($nonStockPayload['stock']);
+
+        $product->fill($nonStockPayload);
+        $product->save();
+
+        if ($stockChanged) {
+            InventoryManager::recordManualAdjustment(
+                $product,
+                $requestedStock,
+                $request->user(),
+                'Stock adjusted while updating the product.',
+            );
+        } else {
+            $product->forceFill(['stock' => $requestedStock])->save();
+        }
 
         return to_route('products.index')->with('success', 'Product updated.');
     }
@@ -83,7 +116,7 @@ class ProductController extends Controller
             'description' => $data['description'] ?? '',
             'price' => $data['price'],
             'sale_price' => $data['salePrice'] ?? null,
-            'stock' => $data['stock'] ?? 0,
+            'stock' => (int) ($data['stock'] ?? 0),
             'status' => $data['status'],
             'category_id' => $data['categoryId'] ?? null,
             'brand_id' => $data['brandId'] ?? null,
@@ -122,5 +155,14 @@ class ProductController extends Controller
                 File::delete($absolutePath);
             }
         }
+    }
+
+    private function sharedProps(): array
+    {
+        return [
+            'products' => DashboardData::products(Product::query()->latest()->get()),
+            'categories' => DashboardData::categories(Category::query()->orderBy('name')->get()),
+            'brands' => DashboardData::brands(Brand::query()->orderBy('name')->get()),
+        ];
     }
 }

@@ -43,6 +43,7 @@ class HandleInertiaRequests extends Middleware
             'navigation' => [
                 'dashboard' => fn () => \App\Support\DashboardNavigation::forUser($request->user()),
             ],
+            'notifications' => fn () => $this->notifications($request),
             'footerSetting' => \App\Support\DashboardData::footerSetting(\App\Models\FooterSetting::first()),
             'localization' => fn () => [
                 'defaultLocale' => config('app.locale', 'en'),
@@ -52,6 +53,35 @@ class HandleInertiaRequests extends Middleware
                 ],
                 'translations' => Schema::hasTable('translations') ? TranslationDictionary::shared() : [],
             ],
+        ];
+    }
+
+    private function notifications(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user || ! $user->canAccessAdminPanel() || ! Schema::hasTable('notifications')) {
+            return [
+                'items' => [],
+                'unreadCount' => 0,
+            ];
+        }
+
+        return [
+            'items' => $user->notifications()
+                ->latest()
+                ->limit(8)
+                ->get()
+                ->map(fn ($notification) => [
+                    'id' => $notification->id,
+                    'title' => (string) data_get($notification->data, 'title', 'Notification'),
+                    'message' => (string) data_get($notification->data, 'message', 'You have a new notification.'),
+                    'href' => data_get($notification->data, 'href'),
+                    'createdAt' => $notification->created_at?->diffForHumans(),
+                    'isRead' => $notification->read_at !== null,
+                ])
+                ->all(),
+            'unreadCount' => $user->unreadNotifications()->count(),
         ];
     }
 }

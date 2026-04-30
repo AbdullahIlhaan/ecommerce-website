@@ -8,9 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Search, Eye, ShoppingCart, FileText } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatPaymentMethod } from "@/lib/payments";
@@ -20,9 +19,6 @@ export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewOrder, setViewOrder] = useState<Order | null>(null);
-  const [editStatusOrder, setEditStatusOrder] = useState<Order | null>(null);
-  const [newStatus, setNewStatus] = useState("");
-  const [newPaymentStatus, setNewPaymentStatus] = useState("");
 
   const getCustomerName = useCallback((id: string) => customers.find(c => c.id === id)?.name || "Unknown", [customers]);
   const getInvoiceNumber = useCallback(
@@ -50,24 +46,6 @@ export default function OrdersPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'orders-report.txt'; a.click();
     toast({ title: "Report exported" });
-  };
-
-  const handleUpdateStatus = () => {
-    if (!editStatusOrder) return;
-
-    router.put(`/orders/${editStatusOrder.id}`, {
-      status: newStatus,
-      paymentStatus: newPaymentStatus,
-    }, {
-      preserveScroll: true,
-      onSuccess: () => {
-        toast({ title: "Order updated" });
-        setEditStatusOrder(null);
-      },
-      onError: (errors) => {
-        toast({ title: Object.values(errors)[0] || "Failed to update order", variant: "destructive" });
-      },
-    });
   };
 
   return (
@@ -112,15 +90,21 @@ export default function OrdersPage() {
                       <div className="flex flex-wrap gap-2">
                         <StatusBadge status={o.status} />
                         <StatusBadge status={o.paymentStatus} />
+                        {o.hasOpenReturnRequest && <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700">Return Open</span>}
                       </div>
                       <div className="text-xs font-medium text-muted-foreground">{formatPaymentMethod(o.paymentMethod)}</div>
+                      {(o.shippingCarrier || o.trackingNumber) && (
+                        <div className="text-xs text-muted-foreground">
+                          {o.shippingCarrier || "Shipment"} {o.trackingNumber ? `• ${o.trackingNumber}` : ""}
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col gap-2">
                       <Button variant="ghost" size="icon" onClick={() => setViewOrder(o)}><Eye className="h-4 w-4" /></Button>
                       <Link href={o.invoiceUrl || `/orders/${o.id}/invoice`} target="_blank">
                         <Button variant="ghost" size="icon" className="text-primary"><FileText className="h-4 w-4" /></Button>
                       </Link>
-                      <Button variant="outline" size="sm" onClick={() => { setEditStatusOrder(o); setNewStatus(o.status); setNewPaymentStatus(o.paymentStatus); }}>Update</Button>
+                      <Button variant="outline" size="sm" onClick={() => router.get(`/orders/${o.id}/edit`)}>Update</Button>
                     </div>
                   </div>
                 </article>
@@ -148,6 +132,12 @@ export default function OrdersPage() {
                         <div className="space-y-1">
                           <StatusBadge status={o.paymentStatus} />
                           <div className="text-xs text-muted-foreground">{formatPaymentMethod(o.paymentMethod)}</div>
+                          {o.hasOpenReturnRequest && <div className="text-xs font-medium text-rose-600">Return request open</div>}
+                          {(o.shippingCarrier || o.trackingNumber) && (
+                            <div className="text-xs text-muted-foreground">
+                              {o.shippingCarrier || "Shipment"} {o.trackingNumber ? `• ${o.trackingNumber}` : ""}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
@@ -156,7 +146,7 @@ export default function OrdersPage() {
                           <Link href={o.invoiceUrl || `/orders/${o.id}/invoice`} target="_blank">
                             <Button variant="ghost" size="icon" title="View Invoice" className="text-primary"><FileText className="h-4 w-4" /></Button>
                           </Link>
-                          <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setEditStatusOrder(o); setNewStatus(o.status); setNewPaymentStatus(o.paymentStatus); }}>Update</Button>
+                          <Button variant="ghost" size="sm" className="text-xs" onClick={() => router.get(`/orders/${o.id}/edit`)}>Update</Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -187,6 +177,8 @@ export default function OrdersPage() {
                 <div><span className="text-muted-foreground">Status:</span> <StatusBadge status={viewOrder.status} /></div>
                 <div><span className="text-muted-foreground">Payment:</span> <StatusBadge status={viewOrder.paymentStatus} /></div>
                 <div><span className="text-muted-foreground">Method:</span> <span className="font-medium">{formatPaymentMethod(viewOrder.paymentMethod)}</span></div>
+                <div><span className="text-muted-foreground">Carrier:</span> <span className="font-medium">{viewOrder.shippingCarrier || "-"}</span></div>
+                <div><span className="text-muted-foreground">Tracking:</span> <span className="font-medium">{viewOrder.trackingNumber || "-"}</span></div>
               </div>
               <div className="border rounded-lg overflow-hidden">
                 <Table>
@@ -207,47 +199,17 @@ export default function OrdersPage() {
                 <div>Tax: <span className="font-medium">BDT {viewOrder.tax.toFixed(2)}</span></div>
                 <div className="text-base font-bold">Total: BDT {viewOrder.total.toFixed(2)}</div>
               </div>
+              {(viewOrder.internalNotes || viewOrder.estimatedDeliveryAt || viewOrder.shippedAt || viewOrder.deliveredAt) && (
+                <div className="space-y-2 rounded-xl border border-border bg-muted/20 p-4 text-sm">
+                  {viewOrder.estimatedDeliveryAt && <div><span className="text-muted-foreground">Estimated Delivery:</span> <span className="font-medium">{viewOrder.estimatedDeliveryAt}</span></div>}
+                  {viewOrder.shippedAt && <div><span className="text-muted-foreground">Shipped At:</span> <span className="font-medium">{viewOrder.shippedAt}</span></div>}
+                  {viewOrder.deliveredAt && <div><span className="text-muted-foreground">Delivered At:</span> <span className="font-medium">{viewOrder.deliveredAt}</span></div>}
+                  {viewOrder.internalNotes && <div><span className="text-muted-foreground">Internal Notes:</span> <span className="font-medium">{viewOrder.internalNotes}</span></div>}
+                </div>
+              )}
             </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Update Status */}
-      <Dialog open={!!editStatusOrder} onOpenChange={() => setEditStatusOrder(null)}>
-        <DialogContent className="max-h-[94svh] overflow-hidden p-0 sm:max-w-lg">
-          <DialogHeader className="border-b border-border px-4 py-4 sm:px-6">
-            <DialogTitle>Update Order Status</DialogTitle>
-            <DialogDescription>
-              Change fulfillment and payment states for the selected order.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="overflow-y-auto px-4 py-4 sm:px-6">
-          <div className="grid gap-4 pb-1">
-            <div>
-              <Label>Order Status</Label>
-              <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {['pending','processing','shipped','delivered','cancelled'].map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Payment Status</Label>
-              <Select value={newPaymentStatus} onValueChange={setNewPaymentStatus}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {['pending','paid','refunded','failed'].map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          </div>
-          <DialogFooter className="border-t border-border px-4 py-4 sm:px-6">
-            <Button variant="outline" onClick={() => setEditStatusOrder(null)}>Cancel</Button>
-            <Button onClick={handleUpdateStatus}>Save</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

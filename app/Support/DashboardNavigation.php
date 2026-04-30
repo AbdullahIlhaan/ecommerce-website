@@ -68,6 +68,7 @@ class DashboardNavigation
                 'items' => [
                     self::item('Customers', 'customers.index', 'Users', [UserRole::SuperAdmin, UserRole::Admin]),
                     self::item('Orders', 'orders.index', 'ShoppingCart', [UserRole::SuperAdmin, UserRole::Admin]),
+                    self::item('Returns', 'return-requests.index', 'RotateCcw', [UserRole::SuperAdmin, UserRole::Admin]),
                     self::item('Coupons', 'coupons.index', 'Ticket', [UserRole::SuperAdmin, UserRole::Admin]),
                     self::item('Reviews', 'reviews.index', 'Star', [UserRole::SuperAdmin, UserRole::Admin, UserRole::Moderator]),
                 ],
@@ -83,6 +84,7 @@ class DashboardNavigation
                 'label' => 'Settings',
                 'items' => [
                     self::item('Footer Settings', 'footer-settings.index', 'Settings', [UserRole::SuperAdmin, UserRole::Admin]),
+                    self::item('Content Pages', 'content-pages.index', 'FileText', [UserRole::SuperAdmin, UserRole::Admin]),
                     ...self::translationItems(),
                 ],
             ],

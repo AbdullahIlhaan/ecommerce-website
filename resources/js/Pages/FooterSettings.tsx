@@ -96,6 +96,9 @@ export default function FooterSettingsPage() {
   };
 
   const handleSave = () => {
+    const socialLinks = form.socialLinks.filter((link) => link.platform.trim() !== "" || link.url.trim() !== "");
+    const paymentMethods = form.paymentMethods.filter((method) => method.name.trim() !== "" || method.imagePath || method.file);
+
     const data: Record<string, File | string | null> = {
       logo_text: form.logoText,
       description: form.description,
@@ -111,13 +114,13 @@ export default function FooterSettingsPage() {
     };
 
     // Prepare social links for multipart form data
-    form.socialLinks.forEach((link, index) => {
+    socialLinks.forEach((link, index) => {
       data[`social_links[${index}][platform]`] = link.platform;
       data[`social_links[${index}][url]`] = link.url;
     });
 
     // Prepare payment methods for multipart form data
-    form.paymentMethods.forEach((method, index) => {
+    paymentMethods.forEach((method, index) => {
       if (method.file) {
         data[`payment_methods[${index}][image]`] = method.file;
       }

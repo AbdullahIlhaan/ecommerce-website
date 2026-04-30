@@ -108,6 +108,7 @@ export interface Order {
   id: string;
   invoiceNumber?: string;
   invoiceUrl?: string;
+  returnRequestUrl?: string;
   customerId: string;
   items: OrderItem[];
   subtotal: number;
@@ -116,6 +117,13 @@ export interface Order {
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'paid' | 'refunded' | 'failed';
   paymentMethod: 'cod' | 'online';
+  shippingCarrier?: string | null;
+  trackingNumber?: string | null;
+  estimatedDeliveryAt?: string | null;
+  shippedAt?: string | null;
+  deliveredAt?: string | null;
+  internalNotes?: string | null;
+  hasOpenReturnRequest?: boolean;
   createdAt: string;
   formattedDate?: string;
 }
@@ -149,6 +157,42 @@ export interface Review {
   comment: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+}
+
+export interface ReturnRequest {
+  id: string;
+  orderId: string;
+  customerId: string | null;
+  customerName: string | null;
+  customerEmail: string | null;
+  orderReference: string | null;
+  type: 'refund' | 'return' | 'exchange';
+  status: 'pending' | 'approved' | 'rejected' | 'received' | 'refunded' | 'closed';
+  refundAmount: number | null;
+  restockItems: boolean;
+  reason: string;
+  details: string | null;
+  resolutionNotes: string | null;
+  requestedAt: string | null;
+  reviewedAt: string | null;
+  createdAt: string | null;
+}
+
+export interface StockMovement {
+  id: string;
+  productId: string;
+  productName: string | null;
+  productSku: string | null;
+  orderId: string | null;
+  returnRequestId: string | null;
+  type: string;
+  quantityChange: number;
+  stockBefore: number;
+  stockAfter: number;
+  reference: string | null;
+  notes: string | null;
+  createdAt: string | null;
+  createdAtLabel: string | null;
 }
 
 function generateId(): string {

@@ -14,9 +14,24 @@ class UserController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Users', [
-            'users' => $this->transformUsers(User::query()->latest()->get()),
-            'roles' => UserRole::options(),
+        return Inertia::render('Users', $this->sharedProps());
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('Users/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'create',
+            'userRecord' => null,
+        ]);
+    }
+
+    public function edit(User $user): Response
+    {
+        return Inertia::render('Users/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'edit',
+            'userRecord' => $this->transformUsers([$user])[0],
         ]);
     }
 
@@ -72,5 +87,13 @@ class UserController extends Controller
             'role' => $user->role,
             'createdAt' => $user->created_at?->toDateString(),
         ])->all();
+    }
+
+    private function sharedProps(): array
+    {
+        return [
+            'users' => $this->transformUsers(User::query()->latest()->get()),
+            'roles' => UserRole::options(),
+        ];
     }
 }

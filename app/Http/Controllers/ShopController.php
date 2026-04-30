@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\User;
+use App\Notifications\AdminOrderNotification;
 use App\Support\DashboardData;
+use App\Support\InventoryManager;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -274,7 +278,7 @@ class ShopController extends Controller
             ]);
 
             foreach ($resolvedItems as $item) {
-                $item['product']->decrement('stock', $item['quantity']);
+                InventoryManager::recordSale($item['product'], $item['quantity'], $order);
 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -286,6 +290,10 @@ class ShopController extends Controller
             }
 
             $customer->notify(new \App\Notifications\OrderPlaced($order));
+            User::query()
+                ->whereIn('role', [UserRole::SuperAdmin->value, UserRole::Admin->value])
+                ->get()
+                ->each(fn (User $user) => $user->notify(new AdminOrderNotification($order->loadMissing('customer'), 'placed')));
 
             return $order->id;
         });

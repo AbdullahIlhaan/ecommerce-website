@@ -14,8 +14,24 @@ class CouponController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Coupons', [
-            'coupons' => DashboardData::coupons(Coupon::query()->latest()->get()),
+        return Inertia::render('Coupons', $this->sharedProps());
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('Coupons/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'create',
+            'coupon' => null,
+        ]);
+    }
+
+    public function edit(Coupon $coupon): Response
+    {
+        return Inertia::render('Coupons/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'edit',
+            'coupon' => DashboardData::coupons(collect([$coupon]))[0],
         ]);
     }
 
@@ -61,6 +77,13 @@ class CouponController extends Controller
             'usage_limit' => $data['usageLimit'] ?? 0,
             'usage_count' => $usageCount,
             'status' => $data['status'],
+        ];
+    }
+
+    private function sharedProps(): array
+    {
+        return [
+            'coupons' => DashboardData::coupons(Coupon::query()->latest()->get()),
         ];
     }
 }

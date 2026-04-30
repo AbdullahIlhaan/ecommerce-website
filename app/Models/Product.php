@@ -54,4 +54,9 @@ class Product extends Model
             ->withPivot('sort_order')
             ->withTimestamps();
     }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
 }

@@ -8,10 +8,12 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="default">
-        <meta name="apple-mobile-web-app-title" content="FutureBD">
+        <meta name="apple-mobile-web-app-title" content="Future-BD">
         <meta name="format-detection" content="telephone=no">
         <link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png">
-        <title inertia>{{ config('app.name', 'Dashboard') }}</title>
+        <link rel="icon" href="/images/logofbd.jpeg">
+        <link rel="shortcut icon" href="/images/logofbd.jpeg">
+        <title inertia>{{ config('app.name', 'Future-BD') }}</title>
         <script>
             (() => {
                 const saved = localStorage.getItem('dashboard-theme');

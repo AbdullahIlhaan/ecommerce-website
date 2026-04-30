@@ -15,8 +15,24 @@ class BrandController extends Controller
 {
     public function index(): Response
     {
-        return Inertia::render('Brands', [
-            'brands' => DashboardData::brands(Brand::query()->orderBy('name')->get()),
+        return Inertia::render('Brands', $this->sharedProps());
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('Brands/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'create',
+            'brand' => null,
+        ]);
+    }
+
+    public function edit(Brand $brand): Response
+    {
+        return Inertia::render('Brands/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'edit',
+            'brand' => DashboardData::brands(collect([$brand]))[0],
         ]);
     }
 
@@ -48,5 +64,12 @@ class BrandController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', Rule::unique('brands', 'slug')->ignore($brandId)],
         ]);
+    }
+
+    private function sharedProps(): array
+    {
+        return [
+            'brands' => DashboardData::brands(Brand::query()->orderBy('name')->get()),
+        ];
     }
 }

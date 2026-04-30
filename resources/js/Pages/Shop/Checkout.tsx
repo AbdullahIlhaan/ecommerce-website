@@ -154,7 +154,19 @@ function normalizeLocationResult(result: {
 }
 
 export default function Checkout() {
-  const { items, subtotal, clearCart, itemCount, isLoaded, syncCart } = useCart();
+  const {
+    items,
+    checkoutItems,
+    subtotal,
+    checkoutSubtotal,
+    clearCart,
+    clearDirectCheckout,
+    itemCount,
+    checkoutItemCount,
+    isLoaded,
+    syncCart,
+    syncCheckoutItems,
+  } = useCart();
   const { auth, errors } = usePage<CheckoutPageProps>().props;
   const [loading, setLoading] = useState(false);
   const [syncingCart, setSyncingCart] = useState(false);
@@ -177,20 +189,21 @@ export default function Checkout() {
   });
 
   const deliveryCharge = formData.deliveryZone ? DELIVERY_CHARGES[formData.deliveryZone] : 0;
-  const total = subtotal + deliveryCharge;
+  const total = checkoutSubtotal + deliveryCharge;
   const hasPinnedLocation = Boolean(formData.deliveryLocationLabel && formData.deliveryLatitude && formData.deliveryLongitude);
   const hasDeliveryZone = Boolean(formData.deliveryZone);
-  const canPlaceOrder = items.length > 0 && hasDeliveryZone;
+  const canPlaceOrder = checkoutItems.length > 0 && hasDeliveryZone;
   const checkoutError = errors.items || errors.total || errors.deliveryCharge;
-  const cartIdsKey = useMemo(() => items.map((item) => item.id).sort().join("|"), [items]);
+  const cartIdsKey = useMemo(() => checkoutItems.map((item) => item.id).sort().join("|"), [checkoutItems]);
+  const isDirectCheckout = checkoutItems.length > 0 && checkoutItemCount !== itemCount;
 
   useEffect(() => {
-    if (!isLoaded || items.length === 0) {
+    if (!isLoaded || checkoutItems.length === 0) {
       return;
     }
 
     const params = new URLSearchParams();
-    items.forEach((item) => params.append("ids[]", item.id));
+    checkoutItems.forEach((item) => params.append("ids[]", item.id));
 
     const controller = new AbortController();
 
@@ -218,7 +231,11 @@ export default function Checkout() {
           }>;
         };
 
-        syncCart(data.items ?? []);
+        if (isDirectCheckout) {
+          syncCheckoutItems(data.items ?? []);
+        } else {
+          syncCart(data.items ?? []);
+        }
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error("Failed to sync checkout cart", error);
@@ -233,7 +250,7 @@ export default function Checkout() {
     void syncCheckoutCart();
 
     return () => controller.abort();
-  }, [cartIdsKey, isLoaded, syncCart]);
+  }, [cartIdsKey, checkoutItems, isDirectCheckout, isLoaded, syncCart, syncCheckoutItems]);
 
   useEffect(() => {
     const query = locationQuery.trim();
@@ -348,23 +365,30 @@ export default function Checkout() {
     setLoading(true);
     router.post("/checkout", {
       ...formData,
-      items: items.map((item) => ({
+      items: checkoutItems.map((item) => ({
         id: item.id,
         name: item.name,
         quantity: item.quantity,
         price: resolveEffectivePrice(item.price, item.salePrice),
       })),
-      subtotal,
+      subtotal: checkoutSubtotal,
       deliveryCharge,
       total,
     }, {
-      onSuccess: () => { clearCart(); setLoading(false); },
+      onSuccess: () => {
+        if (isDirectCheckout) {
+          clearDirectCheckout();
+        } else {
+          clearCart();
+        }
+        setLoading(false);
+      },
       onError: () => setLoading(false),
       preserveScroll: true,
     });
   };
 
-  if (itemCount === 0 && !loading) {
+  if (checkoutItemCount === 0 && !loading) {
     return (
       <StorefrontLayout title="Checkout">
         <div className="flex min-h-[50vh] flex-col items-center justify-center space-y-6 text-center">
@@ -519,9 +543,9 @@ export default function Checkout() {
           <div className="sticky top-28 rounded-3xl border border-border bg-card p-6 shadow-lg md:p-8">
             <h3 className="mb-6 text-xl font-bold">Summary</h3>
             <div className="mb-6 space-y-4">
-              <div className="max-h-60 overflow-y-auto pr-2 space-y-4">{items.map((item) => ( <div key={item.id} className="flex gap-3"><img src={item.image} className="h-12 w-10 rounded-lg border border-border object-cover" /><div className="flex-1"><div className="line-clamp-1 text-xs font-bold">{item.name}</div><div className="text-[10px] text-muted-foreground">{item.quantity} x BDT {resolveEffectivePrice(item.price, item.salePrice).toLocaleString()}</div></div></div> ))}</div>
+              <div className="max-h-60 overflow-y-auto pr-2 space-y-4">{checkoutItems.map((item) => ( <div key={item.id} className="flex gap-3"><img src={item.image} className="h-12 w-10 rounded-lg border border-border object-cover" /><div className="flex-1"><div className="line-clamp-1 text-xs font-bold">{item.name}</div><div className="text-[10px] text-muted-foreground">{item.quantity} x BDT {resolveEffectivePrice(item.price, item.salePrice).toLocaleString()}</div></div></div> ))}</div>
               <Separator />
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span className="font-bold">BDT {subtotal.toLocaleString()}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Subtotal</span><span className="font-bold">BDT {checkoutSubtotal.toLocaleString()}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Delivery</span><span className="font-bold">BDT {deliveryCharge.toLocaleString()}</span></div>
               <Separator />
               <div className="flex justify-between text-xl font-black"><span>Total</span><span className="text-primary">BDT {total.toLocaleString()}</span></div>

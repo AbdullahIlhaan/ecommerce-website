@@ -16,31 +16,24 @@ class FlashDealController extends Controller
 {
     public function index(): Response
     {
-        if (! Schema::hasTable('flash_deals')) {
-            return Inertia::render('FlashDeals', [
-                'flashDeals' => [],
-                'products' => DashboardData::products(
-                    Product::query()
-                        ->where('status', 'active')
-                        ->orderBy('name')
-                        ->get()
-                ),
-            ]);
-        }
+        return Inertia::render('FlashDeals', $this->sharedProps());
+    }
 
-        return Inertia::render('FlashDeals', [
-            'flashDeals' => DashboardData::flashDeals(
-                FlashDeal::query()
-                    ->with(['products' => fn ($query) => $query->orderBy('flash_deal_product.sort_order')])
-                    ->latest()
-                    ->get()
-            ),
-            'products' => DashboardData::products(
-                Product::query()
-                    ->where('status', 'active')
-                    ->orderBy('name')
-                    ->get()
-            ),
+    public function create(): Response
+    {
+        return Inertia::render('FlashDeals/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'create',
+            'flashDeal' => null,
+        ]);
+    }
+
+    public function edit(FlashDeal $flashDeal): Response
+    {
+        return Inertia::render('FlashDeals/Form', [
+            ...$this->sharedProps(),
+            'mode' => 'edit',
+            'flashDeal' => DashboardData::flashDeal($flashDeal->load(['products' => fn ($query) => $query->orderBy('flash_deal_product.sort_order')])),
         ]);
     }
 
@@ -117,5 +110,32 @@ class FlashDealController extends Controller
         }
 
         return $payload;
+    }
+
+    private function sharedProps(): array
+    {
+        $products = DashboardData::products(
+            Product::query()
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get()
+        );
+
+        if (! Schema::hasTable('flash_deals')) {
+            return [
+                'flashDeals' => [],
+                'products' => $products,
+            ];
+        }
+
+        return [
+            'flashDeals' => DashboardData::flashDeals(
+                FlashDeal::query()
+                    ->with(['products' => fn ($query) => $query->orderBy('flash_deal_product.sort_order')])
+                    ->latest()
+                    ->get()
+            ),
+            'products' => $products,
+        ];
     }
 }

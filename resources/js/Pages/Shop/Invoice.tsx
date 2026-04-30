@@ -33,10 +33,18 @@ type Order = {
   status: string;
   paymentStatus: string;
   paymentMethod: string;
+  shippingCarrier?: string | null;
+  trackingNumber?: string | null;
+  estimatedDeliveryAt?: string | null;
+  shippedAt?: string | null;
+  deliveredAt?: string | null;
+  returnRequestUrl?: string | null;
+  hasOpenReturnRequest?: boolean;
   formattedDate: string;
 };
 
 type FooterSetting = {
+  logoPath?: string | null;
   logoText?: string | null;
   description?: string | null;
   address?: string | null;
@@ -124,6 +132,13 @@ export default function Invoice({ order }: { order: Order }) {
             <h1 className="text-xl font-bold">Order Invoice</h1>
           </div>
           <div className="flex items-center gap-3">
+            {order.returnRequestUrl && !order.hasOpenReturnRequest && (
+              <Link href={order.returnRequestUrl}>
+                <Button variant="outline" className="gap-2">
+                  Request Return
+                </Button>
+              </Link>
+            )}
             <Button variant="outline" className="gap-2" onClick={handlePrint}>
               <Printer className="h-4 w-4" /> Print Invoice
             </Button>
@@ -149,7 +164,7 @@ export default function Invoice({ order }: { order: Order }) {
             <div className="flex flex-col justify-between gap-8 sm:flex-row sm:items-center">
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                    <img src="/images/logofbd.jpeg" alt="FutureBD" className="h-12 w-12 rounded-xl border-2 border-white/20 object-cover" />
+                    <img src={footerSetting?.logoPath || "/images/logofbd.jpeg"} alt={companyName} className="h-12 w-12 rounded-xl border-2 border-white/20 object-cover" />
                     <span className="text-3xl font-black tracking-tighter">{companyName}</span>
                 </div>
                 <p className="text-primary-foreground/80 max-w-xs text-sm">
@@ -238,6 +253,25 @@ export default function Invoice({ order }: { order: Order }) {
                           <span>{formatPaymentMethod(order.paymentMethod)}</span>
                        </div>
                     </div>
+                    {(order.shippingCarrier || order.trackingNumber) && (
+                      <div className="space-y-1">
+                        {order.shippingCarrier && (
+                          <div className="text-sm font-medium text-muted-foreground">
+                            Carrier: <span className="font-black text-foreground">{order.shippingCarrier}</span>
+                          </div>
+                        )}
+                        {order.trackingNumber && (
+                          <div className="text-sm font-medium text-muted-foreground">
+                            Tracking: <span className="font-black text-foreground">{order.trackingNumber}</span>
+                          </div>
+                        )}
+                        {order.estimatedDeliveryAt && (
+                          <div className="text-sm font-medium text-muted-foreground">
+                            ETA: <span className="font-black text-foreground">{order.estimatedDeliveryAt}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

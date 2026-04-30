@@ -5,6 +5,7 @@ import {
   ShoppingCart,
   Heart,
   MapPin,
+  Mail,
   Phone,
   Menu,
   Camera,
@@ -300,7 +301,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                 {t("common.home", "Home")}
               </Link>
             )}
-            <a href="#" className="shrink-0 transition hover:text-foreground">{t("common.support_center", "Support Center")}</a>
+            <Link href="/support-center" className="shrink-0 transition hover:text-foreground">{t("common.support_center", "Support Center")}</Link>
           </div>
 
           <div className="flex shrink-0 items-center gap-3">
@@ -631,10 +632,10 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer className="mt-10 hidden px-4 pb-6 text-foreground md:block sm:px-6 lg:px-8">
+      <footer className="mt-10 px-4 pb-6 text-foreground sm:px-6 lg:px-8">
         <div className="page_container">
           <div className="overflow-hidden rounded-[8px] border-t-8 border border-border bg-card shadow-sm">
-            <div className="grid gap-8 px-6 py-10 md:grid-cols-2 lg:grid-cols-5 lg:px-10">
+            <div className="grid gap-8 px-5 py-8 sm:px-6 md:grid-cols-2 lg:grid-cols-5 lg:px-10 lg:py-10">
               <div className="lg:col-span-2">
                 <BrandLogo logoPath={footerSetting.logoPath} logoText={footerSetting.logoText} />
                 <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
@@ -653,18 +654,26 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                       <div>{footerSetting.phone}</div>
                     </div>
                   )}
+                  {footerSetting.email && (
+                    <div className="flex items-start gap-3">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[#a12863]/10 text-[#a12863]"><Mail className="h-4 w-4" /></span>
+                      <a href={`mailto:${footerSetting.email}`} className="break-all transition-colors hover:text-primary">
+                        {footerSetting.email}
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
               <div>
                 <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("common.company", "Company")}</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li><Link href="#">{t("common.about_us", "About Us")}</Link></li>
+                  <li><Link href="/about-us" className="hover:text-primary transition-colors">{t("common.about_us", "About Us")}</Link></li>
                 </ul>
               </div>
               <div>
                 <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("common.support", "Support")}</h4>
                 <ul className="space-y-2 text-sm text-muted-foreground font-medium">
-                  <li><Link href="#" className="hover:text-primary transition-colors">{t("common.help_center", "Help Center")}</Link></li>
+                  <li><Link href="/help-center" className="hover:text-primary transition-colors">{t("common.help_center", "Help Center")}</Link></li>
                   <li><Link href="/refund-policy" className="hover:text-primary transition-colors">{t("common.refund_policy", "Refund Policy")}</Link></li>
                   <li><Link href="/privacy-policy" className="hover:text-primary transition-colors">{t("common.privacy_policy", "Privacy Policy")}</Link></li>
                   <li><Link href="/terms" className="hover:text-primary transition-colors">{t("common.terms_conditions", "Terms & Conditions")}</Link></li>
@@ -672,7 +681,7 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
               </div>
               <div>
                 <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("common.follow_us", "Follow Us")}</h4>
-                <div className="mb-5 flex items-center gap-3">
+                <div className="mb-5 flex flex-wrap items-center gap-3">
                   {footerSetting.facebookUrl && (
                     <a href={footerSetting.facebookUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                       <Facebook className="h-5 w-5" />
@@ -695,17 +704,21 @@ export function StorefrontLayout({ children, title }: StorefrontLayoutProps) {
                    ))}
                 </div>
                 <h4 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">{t("common.payment", "Payment")}</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {footerSetting.paymentMethods.map((p, idx) => (
-                    <div key={idx} className="flex flex-col items-center justify-center rounded-xl border border-border bg-background p-2 text-center text-[10px] font-bold gap-1">
-                      {p.imagePath && <img src={p.imagePath} alt={p.name} className="h-4 w-auto object-contain" />}
-                      <span>{p.name}</span>
-                    </div>
-                  ))}
-                </div>
+                {footerSetting.paymentMethods.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {footerSetting.paymentMethods.map((p, idx) => (
+                      <div key={idx} className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-background p-2 text-center text-[10px] font-bold">
+                        {p.imagePath && <img src={p.imagePath} alt={p.name} className="h-4 w-auto object-contain" />}
+                        <span>{p.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No payment methods added yet.</p>
+                )}
               </div>
             </div>
-            <div className="border-t border-border bg-muted/20 px-6 py-5 text-center text-sm text-muted-foreground lg:px-10">
+            <div className="border-t border-border bg-muted/20 px-5 py-5 text-center text-sm text-muted-foreground sm:px-6 lg:px-10">
               {footerSetting.copyright}
             </div>
           </div>
